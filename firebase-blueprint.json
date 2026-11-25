@@ -1,0 +1,145 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "An individual inventory SKU/variant with micro-OCR embossed text, surface relief design details, quantity, low-stock threshold, optional compressed thumbnail, and perceptual visual fingerprint.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Variant or product name (1-120 chars)."
+        },
+        "extractedText": {
+          "type": "string",
+          "description": "Embossed, debossed, stamped, or printed text extracted via micro-OCR (0-200 chars)."
+        },
+        "designDetails": {
+          "type": "string",
+          "description": "Physical finish, relief, and visual motif description (0-300 chars)."
+        },
+        "category": {
+          "type": "string",
+          "description": "Inventory category label (1-60 chars)."
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Current stock unit count (>= 0)."
+        },
+        "threshold": {
+          "type": "integer",
+          "description": "Low-stock alert threshold (>= 0)."
+        },
+        "thumbnailBase64": {
+          "type": "string",
+          "description": "Optional compressed JPEG thumbnail encoded in Base64 (<= 180000 chars)."
+        },
+        "fpHash": {
+          "type": "string",
+          "description": "Optional 256-bit perceptual luminance hash for local visual similarity matching."
+        },
+        "fpAvgRgb": {
+          "type": "array",
+          "description": "Optional 3-element integer array [R, G, B] of average image color."
+        },
+        "fpRadial": {
+          "type": "array",
+          "description": "Optional 3-element integer array [center, ring, outer] radial luminance profile."
+        },
+        "fpEdgeDensity": {
+          "type": "integer",
+          "description": "Optional edge contrast metric (0-512)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp; clients must submit FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification timestamp; clients must submit FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "name",
+        "extractedText",
+        "designDetails",
+        "category",
+        "quantity",
+        "threshold",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StockHistoryEntry": {
+      "title": "StockHistoryEntry",
+      "description": "Immutable audit log entry recording a Stock IN or Stock OUT transaction.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "itemId": {
+          "type": "string",
+          "description": "Document ID of the associated InventoryItem."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["IN", "OUT"],
+          "description": "Stock movement direction."
+        },
+        "itemName": {
+          "type": "string",
+          "description": "Display label of the item at transaction time (1-200 chars)."
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Positive delta quantity moved (>= 1)."
+        },
+        "resultingStock": {
+          "type": "integer",
+          "description": "Resulting stock balance after movement (>= 0)."
+        },
+        "thumbnailBase64": {
+          "type": "string",
+          "description": "Optional compressed JPEG thumbnail encoded in Base64 (<= 180000 chars)."
+        },
+        "offlineQueued": {
+          "type": "boolean",
+          "description": "Whether the transaction was originally queued while offline."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Transaction timestamp; clients must submit FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "itemId",
+        "type",
+        "itemName",
+        "quantity",
+        "resultingStock",
+        "offlineQueued",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/inventory/{itemId}": {
+      "schema": { "$ref": "#/entities/InventoryItem" },
+      "description": "Private user-isolated inventory SKUs and variants."
+    },
+    "/users/{userId}/history/{entryId}": {
+      "schema": { "$ref": "#/entities/StockHistoryEntry" },
+      "description": "Private user-isolated immutable Stock IN/OUT audit logbook."
+    }
+  }
+}

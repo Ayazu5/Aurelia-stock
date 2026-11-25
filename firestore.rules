@@ -1,0 +1,125 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Hardened Global Primitives ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints (Anti-Update-Gap) ---
+    function isValidInventoryItem(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.extractedText is string && data.extractedText.size() <= 200 &&
+             data.designDetails is string && data.designDetails.size() <= 300 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.quantity is int && data.quantity >= 0 && data.quantity <= 10000000 &&
+             data.threshold is int && data.threshold >= 0 && data.threshold <= 1000000 &&
+             (!('thumbnailBase64' in data) || data.thumbnailBase64 == null || (data.thumbnailBase64 is string && data.thumbnailBase64.size() <= 180000)) &&
+             (!('fpHash' in data) || data.fpHash == null || (data.fpHash is string && data.fpHash.size() <= 256)) &&
+             (!('fpAvgRgb' in data) || data.fpAvgRgb == null || (data.fpAvgRgb is list && data.fpAvgRgb.size() == 3 && data.fpAvgRgb[0] is int)) &&
+             (!('fpRadial' in data) || data.fpRadial == null || (data.fpRadial is list && data.fpRadial.size() == 3 && data.fpRadial[0] is int)) &&
+             (!('fpEdgeDensity' in data) || data.fpEdgeDensity == null || (data.fpEdgeDensity is int && data.fpEdgeDensity >= 0 && data.fpEdgeDensity <= 512)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidHistoryEntry(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.itemId is string && isValidId(data.itemId) &&
+             data.type is string && (data.type == 'IN' || data.type == 'OUT') &&
+             data.itemName is string && data.itemName.size() >= 1 && data.itemName.size() <= 200 &&
+             data.quantity is int && data.quantity >= 1 && data.quantity <= 10000000 &&
+             data.resultingStock is int && data.resultingStock >= 0 && data.resultingStock <= 10000000 &&
+             (!('thumbnailBase64' in data) || data.thumbnailBase64 == null || (data.thumbnailBase64 is string && data.thumbnailBase64.size() <= 180000)) &&
+             data.offlineQueued is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    // --- User-Isolated Inventory Subcollection ---
+    match /users/{userId}/inventory/{itemId} {
+      allow get: if isOwner(userId) && isValidId(itemId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(itemId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'name', 'extractedText', 'designDetails',
+                         'category', 'quantity', 'threshold', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'name', 'extractedText', 'designDetails',
+                         'category', 'quantity', 'threshold', 'thumbnailBase64',
+                         'fpHash', 'fpAvgRgb', 'fpRadial', 'fpEdgeDensity',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidInventoryItem(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(itemId) &&
+                       isValidInventoryItem(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action 1: Inline Quick +/- Stock Adjust
+                         incoming().diff(existing()).affectedKeys().hasOnly(['quantity', 'updatedAt']) ||
+                         // Action 2: Full Variant Edit or Stock IN/OUT Update
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'name', 'extractedText', 'designDetails', 'category',
+                           'quantity', 'threshold', 'thumbnailBase64',
+                           'fpHash', 'fpAvgRgb', 'fpRadial', 'fpEdgeDensity',
+                           'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(itemId);
+    }
+
+    // --- User-Isolated Immutable Audit History Logbook ---
+    match /users/{userId}/history/{entryId} {
+      allow get: if isOwner(userId) && isValidId(entryId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(entryId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'itemId', 'type', 'itemName',
+                         'quantity', 'resultingStock', 'offlineQueued', 'createdAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'itemId', 'type', 'itemName',
+                         'quantity', 'resultingStock', 'thumbnailBase64',
+                         'offlineQueued', 'createdAt'
+                       ]) &&
+                       isValidHistoryEntry(incoming(), userId);
+
+      // Audit log entries are strictly immutable
+      allow update: if false;
+
+      allow delete: if isOwner(userId) && isValidId(entryId);
+    }
+  }
+}

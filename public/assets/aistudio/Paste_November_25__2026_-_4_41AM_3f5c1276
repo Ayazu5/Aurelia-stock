@@ -1,0 +1,2562 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AURELIA STOCK — AI Vision Inventory Suite</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            obsidian: {
+              950: '#0A0C10',
+              900: '#12151C',
+              850: '#161A23',
+              800: '#191D26',
+              700: '#232834',
+            },
+            alabaster: {
+              50: '#F7F8FA',
+              100: '#EEF1F6',
+              200: '#E2E6EE',
+            },
+            champagne: {
+              400: '#E5C158',
+              500: '#D4AF37',
+              600: '#B89427',
+            },
+            emeraldNeon: {
+              400: '#00E676',
+              500: '#10B981',
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+    }
+
+    /* Tabular numbers for metrics, quantities & timestamps */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Hairline luxury borders */
+    .hairline-border {
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+    .dark .hairline-border {
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Precision Emerald Neon Pulse */
+    @keyframes pulse-emerald {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.55), 0 0 8px #00E676;
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 0 4px rgba(0, 230, 118, 0), 0 0 12px #00E676;
+        transform: scale(1.08);
+      }
+    }
+    .neon-dot-active {
+      background-color: #00E676;
+      animation: pulse-emerald 2.2s infinite ease-in-out;
+    }
+    .neon-dot-offline {
+      background-color: #F59E0B;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.65);
+    }
+    .neon-dot-paused {
+      background-color: #64748B;
+    }
+
+    /* AI Laser Scanline Animation */
+    @keyframes laser-sweep {
+      0% {
+        top: 6%;
+        opacity: 0.2;
+      }
+      15% {
+        opacity: 1;
+      }
+      85% {
+        opacity: 1;
+      }
+      100% {
+        top: 92%;
+        opacity: 0.2;
+      }
+    }
+    .ai-laser-line {
+      position: absolute;
+      left: 4%;
+      right: 4%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00E676, #E5C158, #00E676, transparent);
+      box-shadow: 0 0 14px #00E676, 0 0 28px rgba(0, 230, 118, 0.65);
+      animation: laser-sweep 1.8s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
+      z-index: 20;
+    }
+
+    /* Shimmer effect */
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .shimmer-overlay::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      animation: shimmer 1.6s infinite;
+    }
+
+    /* Minimal Scrollbar */
+    ::-webkit-scrollbar {
+      width: 3px;
+      height: 3px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.25);
+      border-radius: 9999px;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Drawer & Modal Spring Transitions */
+    .drawer-panel {
+      transition: transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sheet-panel {
+      animation: sheet-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes sheet-up {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="bg-alabaster-100 text-slate-900 dark:bg-[#06070A] dark:text-slate-100 min-h-screen flex flex-col items-center justify-center selection:bg-champagne-500/30">
+
+  <!-- Executive Toast / Message Box (Never using alert/confirm) -->
+  <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-[92%] max-w-[400px] pointer-events-none"></div>
+
+  <!-- Executive Mobile-First Viewport Frame (Edge-to-edge on mobile, framed luxury device on desktop) -->
+  <div id="app-shell" class="w-full sm:w-[430px] min-h-screen sm:min-h-[860px] sm:max-h-[92vh] sm:my-6 sm:rounded-[38px] bg-alabaster-50 dark:bg-obsidian-950 sm:shadow-[0_28px_80px_-15px_rgba(0,0,0,0.65)] border-x sm:border hairline-border flex flex-col relative overflow-hidden transition-all duration-200">
+
+    <!-- ==================== AUTHENTICATION SCREEN ==================== -->
+    <div id="auth-screen" class="flex-1 flex flex-col justify-between p-6 sm:p-7 bg-gradient-to-b from-white via-alabaster-50 to-alabaster-100 dark:from-obsidian-900 dark:via-obsidian-950 dark:to-obsidian-950 overflow-y-auto">
+      <div class="pt-3">
+        <!-- Brand Header -->
+        <div class="flex items-center justify-between mb-9">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-champagne-500/20 to-champagne-600/5 border border-champagne-500/35 flex items-center justify-center text-champagne-500 shadow-inner">
+              <i data-lucide="scan-line" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h1 class="text-base font-extrabold tracking-tight">SmartStock</h1>
+                <span class="px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest rounded-md bg-champagne-500/15 text-champagne-600 dark:text-champagne-400 border border-champagne-500/25">AI</span>
+              </div>
+              <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Executive Vision Inventory</p>
+            </div>
+          </div>
+
+          <button onclick="toggleTheme()" class="w-10 h-10 rounded-2xl bg-white dark:bg-obsidian-800 border hairline-border text-slate-600 dark:text-champagne-400 flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-xs" title="Toggle Day / Night Mode">
+            <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+            <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+          </button>
+        </div>
+
+        <!-- Hero Headline -->
+        <div class="mb-7">
+          <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-champagne-600 dark:text-champagne-400 mb-1.5">Private Cloud Workspace</p>
+          <h2 id="auth-title" class="text-2xl font-extrabold tracking-tight leading-snug mb-1.5">Precision Inventory,<br/>Powered by Vision AI.</h2>
+          <p id="auth-subtitle" class="text-xs leading-relaxed text-slate-500 dark:text-slate-400">Sign in to access your isolated cloud ledger, instant photo recognition, and offline sync engine.</p>
+        </div>
+
+        <!-- Segmented Auth Switcher -->
+        <div class="grid grid-cols-2 p-1 rounded-2xl bg-alabaster-100 dark:bg-obsidian-900 border hairline-border mb-5">
+          <button id="tab-login" onclick="setAuthMode('login')" class="py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-obsidian-800 shadow-xs text-slate-900 dark:text-white transition">Sign In</button>
+          <button id="tab-signup" onclick="setAuthMode('signup')" class="py-2.5 text-xs font-semibold rounded-xl text-slate-500 dark:text-slate-400 transition">Create Account</button>
+        </div>
+
+        <!-- Auth Form -->
+        <form id="auth-form" onsubmit="handleEmailAuth(event)" class="space-y-3.5">
+          <div id="name-field-wrap" class="hidden">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Workspace / Store Name</label>
+            <input id="auth-name" type="text" placeholder="e.g. Atelier Studio" class="w-full px-4 py-3 rounded-2xl bg-white dark:bg-obsidian-900 border hairline-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-champagne-500/60 transition" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Email Address</label>
+            <input id="auth-email" type="email" required placeholder="founder@company.com" class="w-full px-4 py-3 rounded-2xl bg-white dark:bg-obsidian-900 border hairline-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-champagne-500/60 transition" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Password</label>
+            <input id="auth-password" type="password" required minlength="6" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl bg-white dark:bg-obsidian-900 border hairline-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-champagne-500/60 transition" />
+          </div>
+          <button type="submit" id="auth-submit-btn" class="w-full py-3.5 rounded-2xl bg-slate-900 dark:bg-gradient-to-r dark:from-champagne-500 dark:to-champagne-400 hover:opacity-95 active:scale-[0.99] text-white dark:text-obsidian-950 font-bold text-sm shadow-lg shadow-champagne-500/15 transition flex items-center justify-center gap-2 mt-1">
+            <span>Enter Cloud Workspace</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </form>
+
+        <div class="relative my-5">
+          <div class="absolute inset-0 flex items-center"><div class="w-full border-t hairline-border"></div></div>
+          <div class="relative flex justify-center text-[11px]"><span class="px-3 bg-alabaster-50 dark:bg-obsidian-950 text-slate-400 font-medium">or instant access</span></div>
+        </div>
+
+        <!-- Instant Isolated Demo Workspace -->
+        <button onclick="handleInstantCloudLogin()" class="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-obsidian-900 hover:bg-alabaster-100 dark:hover:bg-obsidian-800 text-slate-800 dark:text-slate-100 font-semibold text-xs border hairline-border flex items-center justify-center gap-2.5 transition active:scale-[0.99] shadow-xs">
+          <span class="w-2 h-2 rounded-full neon-dot-active"></span>
+          <span>Launch Instant Isolated Demo Workspace</span>
+        </button>
+      </div>
+
+      <!-- Footer Support Link -->
+      <div class="pt-6 text-center space-y-2">
+        <p class="text-[10px] font-medium tracking-wide text-slate-400">END-TO-END ISOLATED LEDGER • OFFLINE AUTO-SYNC</p>
+        <a href="https://wa.me/917011162050?text=Hello%20SmartStock%20AI%20Support%2C%20I%20need%20help%20with%20my%20account." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emeraldNeon-400 hover:underline">
+          <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+          <span>Concierge WhatsApp Support · 7011162050</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ==================== MAIN APP DASHBOARD ==================== -->
+    <div id="main-app" class="hidden flex-1 flex flex-col pb-28 overflow-y-auto no-scrollbar">
+
+      <!-- GLASSMORPHIC TOP APP BAR (Mirrors cleanly for Left-Handed / Right-Handed Ergonomics) -->
+      <header id="top-header" class="sticky top-0 z-30 bg-white/80 dark:bg-obsidian-950/80 backdrop-blur-xl border-b hairline-border px-4 py-3 flex items-center justify-between gap-2">
+        <!-- Profile Avatar Trigger (Defaults to Top-Left for Left-Handed Ergonomics) -->
+        <button id="profile-trigger-btn" onclick="openProfileDrawer()" class="flex items-center gap-2.5 p-1 pr-3 rounded-2xl bg-alabaster-100/90 dark:bg-obsidian-900 hover:bg-alabaster-200/70 dark:hover:bg-obsidian-800 border hairline-border transition active:scale-95 group" title="Profile, Hand Orientation & Settings">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-champagne-400 to-champagne-600 text-obsidian-950 font-extrabold text-xs flex items-center justify-center shadow-sm" id="user-avatar-initials">U</div>
+          <div class="text-left">
+            <p id="header-user-name" class="text-xs font-bold leading-tight truncate max-w-[92px]">My Store</p>
+            <p id="hand-mode-badge" class="text-[10px] font-medium text-champagne-600 dark:text-champagne-400 leading-tight">Left-Hand</p>
+          </div>
+        </button>
+
+        <!-- Precision Neon Status Pills -->
+        <div id="status-pills-container" class="flex items-center gap-1.5">
+          <!-- AI Agent Ready Pill -->
+          <div id="ai-status-pill" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-alabaster-100/90 dark:bg-obsidian-900 border hairline-border">
+            <span id="ai-status-dot" class="w-2 h-2 rounded-full neon-dot-active"></span>
+            <span id="ai-status-text" class="text-[10px] font-semibold tracking-tight text-slate-700 dark:text-slate-200">AI Agent Ready</span>
+          </div>
+
+          <!-- Online / Offline Status Pill -->
+          <div id="net-status-pill" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-alabaster-100/90 dark:bg-obsidian-900 border hairline-border">
+            <span id="net-status-dot" class="w-2 h-2 rounded-full neon-dot-active"></span>
+            <span id="net-status-text" class="text-[10px] font-semibold tracking-tight text-slate-700 dark:text-slate-200">Online</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Subtle Offline / Sync Status Banner -->
+      <div id="offline-banner" class="hidden bg-amber-500/10 border-b border-amber-500/25 px-4 py-2 flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-300">
+        <div class="flex items-center gap-2">
+          <i data-lucide="wifi-off" class="w-3.5 h-3.5 shrink-0 text-amber-500"></i>
+          <span><strong>Offline · Manual:</strong> AI paused. Local cache active.</span>
+        </div>
+        <span id="pending-sync-count" class="px-2 py-0.5 rounded-full bg-amber-500/20 font-bold text-[10px] tabular-nums">0 queued</span>
+      </div>
+
+      <!-- EXECUTIVE KPI BENTO CARDS -->
+      <section class="p-4 pb-2 grid grid-cols-2 gap-3">
+        <!-- Total Stock Card -->
+        <button onclick="setStockFilter('all')" id="card-total-stock" class="text-left p-4 rounded-[24px] bg-white dark:bg-obsidian-900 border border-champagne-500/45 shadow-xs transition active:scale-[0.98] relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="w-8 h-8 rounded-xl bg-champagne-500/15 text-champagne-600 dark:text-champagne-400 flex items-center justify-center">
+              <i data-lucide="layers" class="w-4 h-4"></i>
+            </span>
+            <span id="unique-items-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-alabaster-100 dark:bg-obsidian-800 text-slate-600 dark:text-slate-300 tabular-nums">0 SKUs</span>
+          </div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Stock</p>
+          <p id="total-stock-qty" class="text-2xl font-extrabold tracking-tight mt-0.5 tabular-nums">0</p>
+        </button>
+
+        <!-- Low Stock Alerts Card -->
+        <button onclick="setStockFilter('low')" id="card-low-stock" class="text-left p-4 rounded-[24px] bg-white dark:bg-obsidian-900 border hairline-border hover:border-rose-500/40 shadow-xs transition active:scale-[0.98] relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="w-8 h-8 rounded-xl bg-rose-500/12 text-rose-500 flex items-center justify-center">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i>
+            </span>
+            <span id="low-stock-pill" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/12 text-rose-500 tabular-nums">0 Alerts</span>
+          </div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Low Stock Alerts</p>
+          <p id="low-stock-count" class="text-2xl font-extrabold tracking-tight mt-0.5 text-rose-500 tabular-nums">0</p>
+        </button>
+      </section>
+
+      <!-- SEARCH, FILTER PILLS & DENSITY TOGGLE -->
+      <section class="px-4 py-2 space-y-2.5">
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input id="search-input" oninput="renderStockList()" type="text" placeholder="Search items, SKU or category..." class="w-full pl-10 pr-8 py-2.5 rounded-2xl bg-white dark:bg-obsidian-900 border hairline-border text-xs font-medium focus:outline-none focus:ring-2 focus:ring-champagne-500/50 transition" />
+            <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <i data-lucide="x-circle" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <!-- List / Grid Density Toggle -->
+          <button onclick="toggleViewDensity()" id="density-toggle-btn" class="w-10 h-10 rounded-2xl bg-white dark:bg-obsidian-900 border hairline-border text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0 hover:border-champagne-500/40 transition active:scale-95" title="Switch List / Grid View">
+            <i id="density-icon" data-lucide="layout-grid" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Segmented Filter Pills -->
+        <div id="category-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- INVENTORY LIST / GRID -->
+      <main class="px-4 pt-1 flex-1">
+        <div class="flex items-center justify-between mb-2.5">
+          <h2 id="list-heading" class="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">All Inventory</h2>
+          <button onclick="openHistoryModal()" class="text-[11px] font-bold text-champagne-600 dark:text-champagne-400 hover:underline flex items-center gap-1">
+            <i data-lucide="history" class="w-3.5 h-3.5"></i>
+            <span>Audit Log</span>
+          </button>
+        </div>
+
+        <div id="stock-list-container" class="space-y-2.5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </main>
+
+      <!-- ERGONOMIC THUMB-ZONE FLOATING ACTION DOCK -->
+      <div id="bottom-action-dock-wrap" class="fixed sm:absolute bottom-4 inset-x-0 z-30 px-4 flex justify-start pointer-events-none">
+        <div id="bottom-action-bar" class="pointer-events-auto w-full max-w-[398px] flex items-center gap-2.5 p-2 rounded-[26px] bg-white/90 dark:bg-obsidian-900/90 backdrop-blur-2xl border hairline-border shadow-[0_16px_40px_-10px_rgba(0,0,0,0.45)]">
+          <button onclick="openScanModal('IN')" class="flex-1 py-3.5 px-4 rounded-2xl bg-slate-900 dark:bg-gradient-to-r dark:from-champagne-500 dark:to-champagne-400 hover:opacity-95 active:scale-[0.97] text-white dark:text-obsidian-950 font-extrabold text-xs tracking-wide shadow-md flex items-center justify-center gap-2 transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Stock IN</span>
+          </button>
+          <button onclick="openScanModal('OUT')" class="flex-1 py-3.5 px-4 rounded-2xl bg-alabaster-100 dark:bg-obsidian-800 hover:bg-alabaster-200 dark:hover:bg-obsidian-700 active:scale-[0.97] text-slate-900 dark:text-white font-extrabold text-xs tracking-wide border hairline-border flex items-center justify-center gap-2 transition">
+            <i data-lucide="minus-circle" class="w-4 h-4 text-rose-500"></i>
+            <span>Stock OUT</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PROFILE & SETTINGS SLIDE-OVER DRAWER ==================== -->
+    <div id="profile-drawer-backdrop" onclick="closeProfileDrawer()" class="hidden fixed sm:absolute inset-0 z-40 bg-black/65 backdrop-blur-xs transition-opacity"></div>
+    <aside id="profile-drawer" class="fixed sm:absolute top-0 left-0 bottom-0 w-[86%] max-w-[335px] z-50 bg-white dark:bg-obsidian-900 border-r hairline-border p-5 flex flex-col justify-between -translate-x-full drawer-panel overflow-y-auto no-scrollbar">
+      <div>
+        <!-- Drawer Header with UID Isolation Badge -->
+        <div class="flex items-start justify-between pb-4 border-b hairline-border">
+          <div class="flex items-center gap-3">
+            <div id="drawer-avatar" class="w-11 h-11 rounded-2xl bg-gradient-to-br from-champagne-400 to-champagne-600 text-obsidian-950 font-extrabold text-base flex items-center justify-center shadow-sm">U</div>
+            <div>
+              <h3 id="drawer-user-name" class="text-sm font-extrabold">Store Owner</h3>
+              <p id="drawer-user-email" class="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[165px]">user@store.com</p>
+              <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emeraldNeon-400 text-[9px] font-bold">
+                <i data-lucide="shield-check" class="w-2.5 h-2.5"></i>
+                <span id="drawer-uid-badge">Isolated Cloud UID</span>
+              </span>
+            </div>
+          </div>
+          <button onclick="closeProfileDrawer()" class="p-2 rounded-xl bg-alabaster-100 dark:bg-obsidian-800 text-slate-500 hover:text-slate-800 dark:hover:text-white transition">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Settings Controls -->
+        <div class="py-4 space-y-3.5">
+
+          <!-- 1. Hand Orientation Switch -->
+          <div class="p-3.5 rounded-2xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <i data-lucide="hand" class="w-4 h-4 text-champagne-500"></i>
+                <span class="text-xs font-bold">Hand Orientation</span>
+              </div>
+              <span id="drawer-hand-label" class="text-[10px] font-bold uppercase tracking-wider text-champagne-600 dark:text-champagne-400">Left</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-alabaster-100 dark:bg-obsidian-950 border hairline-border">
+              <button id="btn-hand-left" onclick="setHandPreference('left')" class="py-1.5 text-xs font-bold rounded-lg bg-slate-900 dark:bg-champagne-500 text-white dark:text-obsidian-950 transition">Left-Handed</button>
+              <button id="btn-hand-right" onclick="setHandPreference('right')" class="py-1.5 text-xs font-semibold rounded-lg text-slate-500 dark:text-slate-400 transition">Right-Handed</button>
+            </div>
+          </div>
+
+          <!-- 2. Theme Mode (Night / Day) -->
+          <div class="p-3.5 rounded-2xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="sun-moon" class="w-4 h-4 text-champagne-500"></i>
+              <div>
+                <p class="text-xs font-bold">Appearance</p>
+                <p id="theme-status-label" class="text-[11px] text-slate-500 dark:text-slate-400">Night Mode (Obsidian)</p>
+              </div>
+            </div>
+            <button onclick="toggleTheme()" class="px-3 py-1.5 rounded-xl bg-white dark:bg-obsidian-900 border hairline-border text-xs font-bold shadow-xs hover:border-champagne-500/40 transition">
+              Toggle
+            </button>
+          </div>
+
+          <!-- 3. App UI Resolution & Photo Quality -->
+          <div class="p-3.5 rounded-2xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold flex items-center gap-1.5"><i data-lucide="scaling" class="w-3.5 h-3.5 text-champagne-500"></i> UI Resolution Scale</span>
+                <span id="ui-scale-label" class="text-[11px] font-extrabold text-champagne-600 dark:text-champagne-400 tabular-nums">100%</span>
+              </div>
+              <div class="grid grid-cols-4 gap-1 p-1 rounded-xl bg-alabaster-100 dark:bg-obsidian-950 border hairline-border">
+                <button onclick="setUiScale(90)" id="scale-90" class="scale-btn py-1 text-[10px] font-bold rounded-lg text-slate-500 tabular-nums">90%</button>
+                <button onclick="setUiScale(100)" id="scale-100" class="scale-btn py-1 text-[10px] font-bold rounded-lg bg-slate-900 dark:bg-champagne-500 text-white dark:text-obsidian-950 tabular-nums">100%</button>
+                <button onclick="setUiScale(110)" id="scale-110" class="scale-btn py-1 text-[10px] font-bold rounded-lg text-slate-500 tabular-nums">110%</button>
+                <button onclick="setUiScale(120)" id="scale-120" class="scale-btn py-1 text-[10px] font-bold rounded-lg text-slate-500 tabular-nums">120%</button>
+              </div>
+            </div>
+
+            <div class="pt-2.5 border-t hairline-border">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold flex items-center gap-1.5"><i data-lucide="aperture" class="w-3.5 h-3.5 text-emerald-500"></i> Photo Upload Quality</span>
+                <span id="photo-quality-label" class="text-[11px] font-bold text-emerald-500">Medium</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-alabaster-100 dark:bg-obsidian-950 border hairline-border">
+                <button onclick="setPhotoQuality('low')" id="qual-low" class="qual-btn py-1 text-[11px] font-semibold rounded-lg text-slate-500">Low</button>
+                <button onclick="setPhotoQuality('medium')" id="qual-medium" class="qual-btn py-1 text-[11px] font-bold rounded-lg bg-slate-900 dark:bg-champagne-500 text-white dark:text-obsidian-950">Medium</button>
+                <button onclick="setPhotoQuality('high')" id="qual-high" class="qual-btn py-1 text-[11px] font-semibold rounded-lg text-slate-500">High</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Simulate Offline Mode Toggle -->
+          <div class="p-3.5 rounded-2xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="wifi-off" class="w-4 h-4 text-amber-500"></i>
+              <div>
+                <p class="text-xs font-bold">Simulate Offline Mode</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400">Test manual queue & auto-sync</p>
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="simulate-offline-toggle" onchange="toggleSimulatedOffline(this.checked)" class="sr-only peer" />
+              <div class="w-10 h-5 bg-slate-300 dark:bg-obsidian-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+            </label>
+          </div>
+
+          <!-- 5. Stock History Logbook -->
+          <button onclick="closeProfileDrawer(); openHistoryModal();" class="w-full p-3.5 rounded-2xl bg-alabaster-50 dark:bg-obsidian-850 hover:bg-alabaster-100 dark:hover:bg-obsidian-800 border hairline-border flex items-center justify-between transition">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="clipboard-list" class="w-4 h-4 text-champagne-500"></i>
+              <span class="text-xs font-bold">Stock History Logbook</span>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+          </button>
+
+          <!-- 6. Direct WhatsApp Support Button (7011162050) -->
+          <a href="https://wa.me/917011162050?text=Hello%20SmartStock%20AI%20Support%2C%20I%20need%20assistance%20with%20my%20inventory%20app." target="_blank" rel="noopener noreferrer" class="w-full p-3.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-between text-emerald-700 dark:text-emeraldNeon-400 transition">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <p class="text-xs font-bold">WhatsApp Concierge</p>
+                <p class="text-[10px] opacity-85 tabular-nums">+91 7011162050 • Direct Chat</p>
+              </div>
+            </div>
+            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Secure Logout -->
+      <div class="pt-3 border-t hairline-border">
+        <button onclick="handleLogout()" class="w-full py-3 rounded-2xl bg-rose-500/10 hover:bg-rose-500/15 text-rose-500 font-bold text-xs flex items-center justify-center gap-2 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span>Secure Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ==================== STOCK IN / OUT SCAN & AI VISION SHEET ==================== -->
+    <div id="scan-modal" class="hidden fixed sm:absolute inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="sheet-panel w-full max-w-md bg-white dark:bg-obsidian-900 rounded-t-[32px] sm:rounded-[30px] border hairline-border max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+        
+        <!-- Sheet Header -->
+        <div class="px-5 py-4 border-b hairline-border flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span id="scan-modal-badge" class="px-2.5 py-1 rounded-xl text-[10px] font-extrabold tracking-wider bg-champagne-500/15 text-champagne-600 dark:text-champagne-400">STOCK IN (+)</span>
+            <h3 id="scan-modal-title" class="text-sm font-extrabold">Scan or Upload Item</h3>
+          </div>
+          <button onclick="closeScanModal()" class="p-2 rounded-xl bg-alabaster-100 dark:bg-obsidian-800 text-slate-500">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Sheet Body -->
+        <div class="p-5 overflow-y-auto space-y-4 no-scrollbar">
+
+          <!-- Camera / Gallery Capture Zone -->
+          <div id="capture-zone" class="space-y-3">
+            <!-- Live Camera Viewfinder -->
+            <div id="camera-container" class="hidden relative rounded-2xl overflow-hidden bg-black aspect-[4/3] border border-champagne-500/40">
+              <video id="camera-video" autoplay playsinline class="w-full h-full object-cover"></video>
+              <!-- Viewfinder Corner Reticles -->
+              <div class="absolute inset-5 border border-champagne-400/50 rounded-2xl pointer-events-none"></div>
+              <div class="absolute top-3 right-3">
+                <button type="button" onclick="flipCameraFacing()" class="p-2.5 rounded-xl bg-obsidian-950/75 text-white border border-white/15 backdrop-blur-md" title="Flip Front / Rear Camera">
+                  <i data-lucide="switch-camera" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <div class="absolute bottom-3 inset-x-0 flex items-center justify-center gap-4">
+                <button type="button" onclick="stopCamera()" class="p-3 rounded-full bg-obsidian-950/80 text-white border border-white/15">
+                  <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <button type="button" onclick="captureFromCamera()" class="w-14 h-14 rounded-full bg-champagne-500 border-4 border-white shadow-lg flex items-center justify-center text-obsidian-950 active:scale-90 transition">
+                  <i data-lucide="camera" class="w-6 h-6"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Captured / Uploaded Photo Preview with Laser Scanline Overlay -->
+            <div id="preview-container" class="hidden relative rounded-2xl overflow-hidden bg-alabaster-100 dark:bg-obsidian-950 border hairline-border">
+              <img id="captured-preview-img" src="" alt="Scanned item" class="w-full max-h-52 object-contain mx-auto" />
+              <!-- Laser Scanline Overlay (visible during AI scan) -->
+              <div id="laser-overlay" class="hidden absolute inset-0 bg-obsidian-950/35 pointer-events-none">
+                <div class="ai-laser-line"></div>
+              </div>
+              <button type="button" onclick="resetCapturedImage()" class="absolute top-2.5 right-2.5 px-3 py-1.5 rounded-xl bg-obsidian-950/80 text-white text-xs font-bold flex items-center gap-1.5 backdrop-blur-md border border-white/10">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Retake</span>
+              </button>
+            </div>
+
+            <!-- Capture & Storage Upload Triggers -->
+            <div id="capture-buttons-row" class="grid grid-cols-2 gap-2.5">
+              <button type="button" onclick="startCamera()" class="py-4 px-3 rounded-2xl bg-champagne-500/12 hover:bg-champagne-500/20 border border-champagne-500/30 text-champagne-700 dark:text-champagne-400 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition active:scale-[0.98]">
+                <i data-lucide="camera" class="w-5 h-5"></i>
+                <span>Live Camera</span>
+              </button>
+              <label class="py-4 px-3 rounded-2xl bg-alabaster-100 dark:bg-obsidian-850 hover:bg-alabaster-200/70 dark:hover:bg-obsidian-800 border hairline-border text-slate-700 dark:text-slate-200 font-bold text-xs flex flex-col items-center justify-center gap-1.5 cursor-pointer transition active:scale-[0.98]">
+                <i data-lucide="image-plus" class="w-5 h-5 text-emerald-500"></i>
+                <span>Gallery / Storage</span>
+                <input id="gallery-file-input" type="file" accept="image/*" onchange="handleFileUpload(event)" class="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <!-- AI Scanning Skeleton / Status Pill -->
+          <div id="ai-scanning-loader" class="hidden relative overflow-hidden p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 shimmer-overlay">
+            <div class="w-5 h-5 border-2 border-emeraldNeon-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+            <div>
+              <p class="text-xs font-bold text-emerald-700 dark:text-emeraldNeon-400">Gemini Vision Analyzing Photo...</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Matching saved inventory & identifying product</p>
+            </div>
+          </div>
+
+          <!-- AI Match / Suggestion Banner -->
+          <div id="ai-match-banner" class="hidden p-3.5 rounded-2xl bg-champagne-500/10 border border-champagne-500/30 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-extrabold text-champagne-700 dark:text-champagne-400 flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span id="ai-match-title">AI Identified Variant</span>
+              </span>
+              <span id="ai-confidence-pill" class="px-2 py-0.5 rounded-md bg-champagne-500/15 text-[10px] font-extrabold text-champagne-700 dark:text-champagne-300 tabular-nums">OCR Active</span>
+            </div>
+            <p id="ai-match-desc" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed"></p>
+            <!-- Extracted Embossed Text & Design Chips -->
+            <div id="ai-extracted-chips" class="hidden flex flex-wrap items-center gap-1.5 pt-1">
+              <span id="ai-ocr-chip" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-obsidian-950/90 dark:bg-obsidian-950 text-emeraldNeon-400 border border-emerald-500/30 text-[10px] font-bold tracking-wide">
+                <i data-lucide="type" class="w-2.5 h-2.5"></i>
+                <span id="ai-ocr-chip-text">""</span>
+              </span>
+              <span id="ai-design-chip" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/80 dark:bg-obsidian-800 text-slate-700 dark:text-slate-300 border hairline-border text-[10px] font-semibold">
+                <i data-lucide="scan-search" class="w-2.5 h-2.5 text-champagne-500"></i>
+                <span id="ai-design-chip-text">Details</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- AI CONFUSED / SIMILAR VARIANT DECISION CARD -->
+          <div id="ai-disambiguation-card" class="hidden p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/40 space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-300 flex items-center justify-center shrink-0">
+                  <i data-lucide="git-branch" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h4 class="text-xs font-extrabold text-amber-800 dark:text-amber-200">AI Needs Confirmation · Similar Variant</h4>
+                  <p id="disambiguation-subtitle" class="text-[11px] text-amber-700/90 dark:text-amber-300/85 leading-snug">Visually similar item(s) exist. Add to an existing SKU or list separately?</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Candidate Existing Variants List -->
+            <div id="disambiguation-candidates" class="space-y-2 max-h-44 overflow-y-auto no-scrollbar">
+              <!-- Populated dynamically with thumbnail, name, embossed text badge, similarity % -->
+            </div>
+
+            <!-- Two Explicit Decision Paths -->
+            <div id="disambiguation-actions" class="grid grid-cols-2 gap-2 pt-1">
+              <button type="button" id="btn-choose-existing" onclick="confirmDisambiguationExisting()" class="py-2.5 px-3 rounded-xl bg-white dark:bg-obsidian-950 hover:bg-alabaster-100 dark:hover:bg-obsidian-800 border hairline-border text-slate-900 dark:text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 transition active:scale-[0.98]">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-500"></i>
+                <span>Add to Selected</span>
+              </button>
+              <button type="button" id="btn-choose-new-sku" onclick="confirmDisambiguationNew()" class="py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-obsidian-950 font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-sm transition active:scale-[0.98]">
+                <i data-lucide="plus-square" class="w-3.5 h-3.5"></i>
+                <span>List as New SKU</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STOCK OUT HELP / MANUAL SELECTOR ASSISTANT -->
+          <div id="stock-out-help-box" class="hidden p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                <i data-lucide="help-circle" class="w-4 h-4"></i>
+                <span>Help · Select Individual Variant</span>
+              </span>
+              <span class="text-[10px] font-semibold text-amber-600/80 dark:text-amber-400/80">One-tap verify</span>
+            </div>
+            <!-- Visual Candidate Strip for Stock OUT -->
+            <div id="stock-out-visual-candidates" class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+              <!-- Populated dynamically with thumbnails & embossed markings -->
+            </div>
+            <select id="manual-stock-out-select" onchange="selectExistingItemForOut(this.value)" class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-obsidian-950 border hairline-border text-xs font-semibold">
+              <option value="">-- Choose from all saved inventory --</option>
+            </select>
+          </div>
+
+          <!-- Always-Editable Item Form -->
+          <form id="stock-entry-form" onsubmit="submitStockEntry(event)" class="space-y-3">
+            <input type="hidden" id="matched-item-id" value="" />
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Variant / Product Name *</label>
+                <button type="button" onclick="focusAndSelect('entry-item-name')" class="text-[11px] font-bold text-champagne-600 dark:text-champagne-400 flex items-center gap-1 hover:underline">
+                  <i data-lucide="pencil" class="w-3 h-3"></i>
+                  <span>Edit</span>
+                </button>
+              </div>
+              <input id="entry-item-name" type="text" required placeholder='e.g. Jeans Button — "DENIM CO."' class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-champagne-500/60" />
+            </div>
+
+            <!-- Embossed / Engraved Text (OCR) & Surface Design Details -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Embossed / OCR Text</label>
+                  <button type="button" onclick="focusAndSelect('entry-item-ocr')" class="text-[10px] font-bold text-champagne-600 dark:text-champagne-400">Edit</button>
+                </div>
+                <input id="entry-item-ocr" type="text" placeholder='e.g. DENIM CO. / ESTD 1966' class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-xs font-bold text-emerald-700 dark:text-emeraldNeon-400 focus:outline-none focus:ring-2 focus:ring-champagne-500/60" />
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Design / Relief Details</label>
+                  <button type="button" onclick="focusAndSelect('entry-item-design')" class="text-[10px] font-bold text-champagne-600 dark:text-champagne-400">Edit</button>
+                </div>
+                <input id="entry-item-design" type="text" placeholder="e.g. Matte black, single rim" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-xs font-medium focus:outline-none focus:ring-2 focus:ring-champagne-500/60" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Category</label>
+                  <button type="button" onclick="focusAndSelect('entry-item-category')" class="text-[10px] font-bold text-champagne-600 dark:text-champagne-400">Edit</button>
+                </div>
+                <input id="entry-item-category" type="text" placeholder="General" value="General" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-champagne-500/60" />
+              </div>
+
+              <div id="threshold-field-wrap">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Low Alert ≤</label>
+                  <button type="button" onclick="focusAndSelect('entry-item-threshold')" class="text-[10px] font-bold text-champagne-600 dark:text-champagne-400">Edit</button>
+                </div>
+                <input id="entry-item-threshold" type="number" min="0" value="5" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-sm font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-champagne-500/60" />
+              </div>
+            </div>
+
+            <div>
+              <label id="entry-qty-label" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Quantity to Add *</label>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="adjustEntryQty(-1)" class="w-11 h-11 rounded-xl bg-alabaster-100 dark:bg-obsidian-850 font-extrabold text-base flex items-center justify-center border hairline-border active:scale-95 transition">-</button>
+                <input id="entry-item-qty" type="number" min="1" value="1" required class="flex-1 text-center py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-base font-extrabold tabular-nums focus:outline-none focus:ring-2 focus:ring-champagne-500/60" />
+                <button type="button" onclick="adjustEntryQty(1)" class="w-11 h-11 rounded-xl bg-alabaster-100 dark:bg-obsidian-850 font-extrabold text-base flex items-center justify-center border hairline-border active:scale-95 transition">+</button>
+              </div>
+            </div>
+
+            <button type="submit" id="confirm-entry-btn" class="w-full py-3.5 rounded-2xl bg-slate-900 dark:bg-gradient-to-r dark:from-champagne-500 dark:to-champagne-400 hover:opacity-95 active:scale-[0.99] text-white dark:text-obsidian-950 font-extrabold text-sm shadow-lg transition mt-2">
+              Confirm Stock IN
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== DIRECT ITEM EDIT MODAL ==================== -->
+    <div id="edit-item-modal" class="hidden fixed sm:absolute inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="sheet-panel w-full max-w-sm bg-white dark:bg-obsidian-900 rounded-[28px] border hairline-border p-5 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-extrabold">Edit Variant SKU</h3>
+          <button onclick="closeEditModal()" class="p-1.5 rounded-xl bg-alabaster-100 dark:bg-obsidian-800 text-slate-500">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <form onsubmit="saveDirectItemEdit(event)" class="space-y-3">
+          <input type="hidden" id="edit-modal-id" />
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Variant / Item Name</label>
+            <input id="edit-modal-name" type="text" required class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-sm font-bold" />
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Embossed / OCR Text</label>
+              <input id="edit-modal-ocr" type="text" placeholder="e.g. DENIM CO." class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-xs font-bold text-emerald-600 dark:text-emeraldNeon-400" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Design Details</label>
+              <input id="edit-modal-design" type="text" placeholder="Finish / shape" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-xs" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Category</label>
+              <input id="edit-modal-category" type="text" class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-sm" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Current Stock</label>
+              <input id="edit-modal-qty" type="number" min="0" required class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-sm font-extrabold tabular-nums" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Low Stock Alert Threshold</label>
+            <input id="edit-modal-threshold" type="number" min="0" required class="w-full px-3.5 py-2.5 rounded-xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border text-sm font-bold tabular-nums" />
+          </div>
+          <div class="flex items-center gap-2 pt-2">
+            <button type="button" onclick="deleteCurrentEditItem()" class="px-4 py-3 rounded-xl bg-rose-500/12 text-rose-500 font-bold text-xs hover:bg-rose-500/20 transition">Delete</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-slate-900 dark:bg-champagne-500 text-white dark:text-obsidian-950 font-extrabold text-xs shadow-md transition">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== STOCK HISTORY AUDIT LOG MODAL ==================== -->
+    <div id="history-modal" class="hidden fixed sm:absolute inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="sheet-panel w-full max-w-md bg-white dark:bg-obsidian-900 rounded-t-[32px] sm:rounded-[30px] border hairline-border max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
+        <div class="px-5 py-4 border-b hairline-border flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-champagne-500"></i>
+            <h3 class="text-sm font-extrabold">Stock History Logbook</h3>
+          </div>
+          <button onclick="closeHistoryModal()" class="p-1.5 rounded-xl bg-alabaster-100 dark:bg-obsidian-800 text-slate-500">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="history-list-container" class="p-4 overflow-y-auto space-y-2.5 flex-1 no-scrollbar">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== FIREBASE & APPLICATION LOGIC ==================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signInAnonymously,
+      signInWithCustomToken,
+      onAuthStateChanged,
+      signOut,
+      updateProfile
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      deleteDoc,
+      addDoc,
+      onSnapshot,
+      collection
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- Environment & Firebase Setup ---
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'smart-stock-ai-app';
+    let firebaseConfig = null;
+    try {
+      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+        firebaseConfig = JSON.parse(__firebase_config);
+      }
+    } catch (e) {
+      console.warn("Firebase config fallback:", e);
+    }
+
+    let app = null;
+    let auth = null;
+    let db = null;
+    let useCloudMode = false;
+
+    if (firebaseConfig && firebaseConfig.apiKey) {
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        useCloudMode = true;
+      } catch (err) {
+        console.warn("Firebase init error, using isolated local storage fallback:", err);
+      }
+    }
+
+    // --- Application State ---
+    const state = {
+      user: null,
+      authMode: 'login',
+      items: [],
+      history: [],
+      filter: 'all',
+      viewDensity: 'list', // 'list' | 'grid'
+      handSide: 'left',    // Default Left-Handed
+      theme: 'dark',       // Default Obsidian Dark
+      uiScale: 100,
+      photoQuality: 'medium',
+      isOnline: navigator.onLine,
+      simulatedOffline: false,
+      offlineQueue: [],
+      scanMode: 'IN',
+      capturedImageBase64: null,
+      capturedFingerprint: null,
+      lastUploadedFilename: '',
+      pendingNewSuggestion: null,
+      selectedCandidateId: null,
+      cameraStream: null,
+      cameraFacingMode: 'environment',
+      unsubscribeItems: null,
+      unsubscribeHistory: null
+    };
+
+    // --- Toast Notification (Zero alert/confirm) ---
+    window.showToast = function(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const styles = {
+        success: 'bg-obsidian-900 dark:bg-obsidian-800 text-emeraldNeon-400 border-emerald-500/40',
+        error: 'bg-rose-950 text-rose-200 border-rose-500/40',
+        warning: 'bg-amber-950 text-amber-200 border-amber-500/40',
+        info: 'bg-slate-900 dark:bg-obsidian-800 text-slate-100 border-champagne-500/35'
+      };
+      toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-2xl text-xs font-bold flex items-center justify-between gap-3 transition-all duration-300 backdrop-blur-xl ${styles[type] || styles.info}`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-8px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    };
+
+    function isEffectivelyOnline() {
+      return state.isOnline && !state.simulatedOffline;
+    }
+
+    // --- Update Neon Status Pills & Offline Sync Banner ---
+    function updateConnectivityUI() {
+      const online = isEffectivelyOnline();
+      const aiDot = document.getElementById('ai-status-dot');
+      const aiText = document.getElementById('ai-status-text');
+      const netDot = document.getElementById('net-status-dot');
+      const netText = document.getElementById('net-status-text');
+      const offlineBanner = document.getElementById('offline-banner');
+      const pendingCountEl = document.getElementById('pending-sync-count');
+
+      if (online) {
+        aiDot.className = 'w-2 h-2 rounded-full neon-dot-active';
+        aiText.textContent = 'AI Agent Ready';
+        netDot.className = 'w-2 h-2 rounded-full neon-dot-active';
+        netText.textContent = 'Online';
+        offlineBanner.classList.add('hidden');
+      } else {
+        aiDot.className = 'w-2 h-2 rounded-full neon-dot-paused';
+        aiText.textContent = 'AI Paused';
+        netDot.className = 'w-2 h-2 rounded-full neon-dot-offline';
+        netText.textContent = 'Offline · Manual';
+        offlineBanner.classList.remove('hidden');
+        pendingCountEl.textContent = `${state.offlineQueue.length} queued`;
+      }
+    }
+
+    window.addEventListener('online', () => {
+      state.isOnline = true;
+      updateConnectivityUI();
+      showToast('Connection restored · Syncing offline ledger...', 'success');
+      flushOfflineQueue();
+    });
+
+    window.addEventListener('offline', () => {
+      state.isOnline = false;
+      updateConnectivityUI();
+      showToast('Offline · Manual Mode engaged.', 'warning');
+    });
+
+    window.toggleSimulatedOffline = function(checked) {
+      state.simulatedOffline = checked;
+      updateConnectivityUI();
+      if (checked) {
+        showToast('Simulated Offline Mode active — AI paused.', 'warning');
+      } else {
+        showToast('Back Online — AI Agent Ready & syncing.', 'success');
+        flushOfflineQueue();
+      }
+    };
+
+    // --- Authentication ---
+    window.setAuthMode = function(mode) {
+      state.authMode = mode;
+      const isSignup = mode === 'signup';
+      document.getElementById('name-field-wrap').classList.toggle('hidden', !isSignup);
+      document.getElementById('auth-title').innerHTML = isSignup
+        ? 'Create Your<br/>Isolated Ledger.'
+        : 'Precision Inventory,<br/>Powered by Vision AI.';
+      document.getElementById('auth-submit-btn').querySelector('span').textContent = isSignup
+        ? 'Create Cloud Workspace'
+        : 'Enter Cloud Workspace';
+
+      document.getElementById('tab-login').className = !isSignup
+        ? 'py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-obsidian-800 shadow-xs text-slate-900 dark:text-white transition'
+        : 'py-2.5 text-xs font-semibold rounded-xl text-slate-500 dark:text-slate-400 transition';
+      document.getElementById('tab-signup').className = isSignup
+        ? 'py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-obsidian-800 shadow-xs text-slate-900 dark:text-white transition'
+        : 'py-2.5 text-xs font-semibold rounded-xl text-slate-500 dark:text-slate-400 transition';
+    };
+
+    window.handleEmailAuth = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const storeName = document.getElementById('auth-name').value.trim() || email.split('@')[0];
+
+      if (useCloudMode && auth) {
+        try {
+          if (state.authMode === 'signup') {
+            const cred = await createUserWithEmailAndPassword(auth, email, password);
+            await updateProfile(cred.user, { displayName: storeName });
+            showToast('Private cloud workspace created!', 'success');
+          } else {
+            await signInWithEmailAndPassword(auth, email, password);
+            showToast('Authenticated securely.', 'success');
+          }
+        } catch (err) {
+          showToast(err.message.replace('Firebase:', '').trim(), 'error');
+        }
+      } else {
+        const localUid = 'usr_' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
+        onUserAuthenticated({ uid: localUid, email, displayName: storeName });
+      }
+    };
+
+    window.handleInstantCloudLogin = async function() {
+      if (useCloudMode && auth) {
+        try {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+          showToast('Connected to isolated Cloud Demo Workspace.', 'success');
+        } catch (err) {
+          onUserAuthenticated({ uid: 'demo_isolated_01', email: 'demo@smartstock.ai', displayName: 'Atelier Demo' });
+        }
+      } else {
+        onUserAuthenticated({ uid: 'demo_isolated_01', email: 'demo@smartstock.ai', displayName: 'Atelier Demo' });
+      }
+    };
+
+    window.handleLogout = async function() {
+      closeProfileDrawer();
+      if (state.unsubscribeItems) state.unsubscribeItems();
+      if (state.unsubscribeHistory) state.unsubscribeHistory();
+      if (useCloudMode && auth) {
+        try { await signOut(auth); } catch (e) {}
+      }
+      state.user = null;
+      state.items = [];
+      state.history = [];
+      document.getElementById('main-app').classList.add('hidden');
+      document.getElementById('auth-screen').classList.remove('hidden');
+      showToast('Signed out safely.', 'info');
+    };
+
+    if (useCloudMode && auth) {
+      onAuthStateChanged(auth, (user) => {
+        if (user) onUserAuthenticated(user);
+      });
+    }
+
+    function onUserAuthenticated(user) {
+      state.user = user;
+      const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'My Store');
+      const email = user.email || `UID: ${user.uid.slice(0, 10)}...`;
+
+      document.getElementById('header-user-name').textContent = displayName;
+      document.getElementById('drawer-user-name').textContent = displayName;
+      document.getElementById('drawer-user-email').textContent = email;
+      document.getElementById('drawer-uid-badge').textContent = `Isolated ID: ${user.uid.slice(0, 8)}`;
+
+      const initial = displayName.charAt(0).toUpperCase();
+      document.getElementById('user-avatar-initials').textContent = initial;
+      document.getElementById('drawer-avatar').textContent = initial;
+
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('main-app').classList.remove('hidden');
+
+      loadUserPreferences();
+      loadOfflineQueue();
+      subscribeToUserStock();
+      updateConnectivityUI();
+      lucide.createIcons();
+    }
+
+    // --- User Settings & Ergonomics ---
+    function getPrefKey() {
+      return `smartstock_prefs_v2_${state.user?.uid || 'guest'}`;
+    }
+
+    function loadUserPreferences() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(getPrefKey()) || '{}');
+        setHandPreference(saved.handSide || 'left', false);
+        applyTheme(saved.theme || 'dark', false);
+        setUiScale(saved.uiScale || 100, false);
+        setPhotoQuality(saved.photoQuality || 'medium', false);
+        if (saved.viewDensity) {
+          state.viewDensity = saved.viewDensity;
+          updateDensityIcon();
+        }
+      } catch (e) {}
+    }
+
+    function saveUserPreferences() {
+      try {
+        localStorage.setItem(getPrefKey(), JSON.stringify({
+          handSide: state.handSide,
+          theme: state.theme,
+          uiScale: state.uiScale,
+          photoQuality: state.photoQuality,
+          viewDensity: state.viewDensity
+        }));
+      } catch (e) {}
+    }
+
+    window.setHandPreference = function(side, persist = true) {
+      state.handSide = side;
+      const header = document.getElementById('top-header');
+      const actionBar = document.getElementById('bottom-action-bar');
+      const dockWrap = document.getElementById('bottom-action-dock-wrap');
+      const drawer = document.getElementById('profile-drawer');
+      const badge = document.getElementById('hand-mode-badge');
+      const drawerLabel = document.getElementById('drawer-hand-label');
+      const btnLeft = document.getElementById('btn-hand-left');
+      const btnRight = document.getElementById('btn-hand-right');
+
+      const activeBtnClass = 'py-1.5 text-xs font-bold rounded-lg bg-slate-900 dark:bg-champagne-500 text-white dark:text-obsidian-950 transition';
+      const inactiveBtnClass = 'py-1.5 text-xs font-semibold rounded-lg text-slate-500 dark:text-slate-400 transition';
+
+      if (side === 'left') {
+        header.classList.remove('flex-row-reverse');
+        actionBar.classList.remove('flex-row-reverse');
+        dockWrap.classList.remove('justify-end');
+        dockWrap.classList.add('justify-start');
+        drawer.classList.remove('right-0', 'border-l', 'translate-x-full');
+        drawer.classList.add('left-0', 'border-r');
+        badge.textContent = 'Left-Hand';
+        drawerLabel.textContent = 'Left';
+        btnLeft.className = activeBtnClass;
+        btnRight.className = inactiveBtnClass;
+      } else {
+        header.classList.add('flex-row-reverse');
+        actionBar.classList.add('flex-row-reverse');
+        dockWrap.classList.remove('justify-start');
+        dockWrap.classList.add('justify-end');
+        drawer.classList.remove('left-0', 'border-r', '-translate-x-full');
+        drawer.classList.add('right-0', 'border-l');
+        badge.textContent = 'Right-Hand';
+        drawerLabel.textContent = 'Right';
+        btnRight.className = activeBtnClass;
+        btnLeft.className = inactiveBtnClass;
+      }
+      if (persist) {
+        saveUserPreferences();
+        showToast(`Hand Orientation: ${side === 'left' ? 'Left-Handed' : 'Right-Handed'}`, 'info');
+      }
+    };
+
+    function applyTheme(theme, persist = true) {
+      state.theme = theme;
+      const htmlEl = document.documentElement;
+      const label = document.getElementById('theme-status-label');
+      if (theme === 'dark') {
+        htmlEl.classList.add('dark');
+        if (label) label.textContent = 'Night Mode (Obsidian)';
+      } else {
+        htmlEl.classList.remove('dark');
+        if (label) label.textContent = 'Day Mode (Alabaster)';
+      }
+      if (persist) saveUserPreferences();
+    }
+
+    window.toggleTheme = function() {
+      applyTheme(state.theme === 'dark' ? 'light' : 'dark', true);
+    };
+
+    window.setUiScale = function(val, persist = true) {
+      state.uiScale = Number(val);
+      document.getElementById('ui-scale-label').textContent = `${state.uiScale}%`;
+      document.documentElement.style.fontSize = `${(state.uiScale / 100) * 16}px`;
+      [90, 100, 110, 120].forEach(s => {
+        const btn = document.getElementById(`scale-${s}`);
+        if (!btn) return;
+        btn.className = s === state.uiScale
+          ? 'scale-btn py-1 text-[10px] font-extrabold rounded-lg bg-slate-900 dark:bg-champagne-500 text-white dark:text-obsidian-950 tabular-nums'
+          : 'scale-btn py-1 text-[10px] font-bold rounded-lg text-slate-500 tabular-nums';
+      });
+      if (persist) saveUserPreferences();
+    };
+
+    window.setPhotoQuality = function(qual, persist = true) {
+      state.photoQuality = qual;
+      const labels = { low: 'Low (Fast)', medium: 'Medium', high: 'High (HD)' };
+      document.getElementById('photo-quality-label').textContent = labels[qual];
+      ['low', 'medium', 'high'].forEach(q => {
+        const btn = document.getElementById(`qual-${q}`);
+        btn.className = q === qual
+          ? 'qual-btn py-1 text-[11px] font-bold rounded-lg bg-slate-900 dark:bg-champagne-500 text-white dark:text-obsidian-950'
+          : 'qual-btn py-1 text-[11px] font-semibold rounded-lg text-slate-500';
+      });
+      if (persist) saveUserPreferences();
+    };
+
+    window.toggleViewDensity = function() {
+      state.viewDensity = state.viewDensity === 'list' ? 'grid' : 'list';
+      updateDensityIcon();
+      saveUserPreferences();
+      renderStockList();
+    };
+
+    function updateDensityIcon() {
+      const iconEl = document.getElementById('density-icon');
+      if (iconEl) {
+        iconEl.setAttribute('data-lucide', state.viewDensity === 'list' ? 'layout-grid' : 'list');
+        lucide.createIcons();
+      }
+    }
+
+    // --- Profile Drawer ---
+    window.openProfileDrawer = function() {
+      document.getElementById('profile-drawer-backdrop').classList.remove('hidden');
+      document.getElementById('profile-drawer').classList.remove('-translate-x-full', 'translate-x-full');
+      lucide.createIcons();
+    };
+
+    window.closeProfileDrawer = function() {
+      document.getElementById('profile-drawer-backdrop').classList.add('hidden');
+      const drawer = document.getElementById('profile-drawer');
+      if (state.handSide === 'left') drawer.classList.add('-translate-x-full');
+      else drawer.classList.add('translate-x-full');
+    };
+
+    // --- Isolated Cloud & Offline Sync Data Engine ---
+    function getLocalItemsKey() { return `smartstock_inv_${state.user?.uid}`; }
+    function getLocalHistoryKey() { return `smartstock_hist_${state.user?.uid}`; }
+    function getOfflineQueueKey() { return `smartstock_q_${state.user?.uid}`; }
+
+    function loadOfflineQueue() {
+      try {
+        state.offlineQueue = JSON.parse(localStorage.getItem(getOfflineQueueKey()) || '[]');
+      } catch (e) {
+        state.offlineQueue = [];
+      }
+      updateConnectivityUI();
+    }
+
+    function saveOfflineQueue() {
+      localStorage.setItem(getOfflineQueueKey(), JSON.stringify(state.offlineQueue));
+      updateConnectivityUI();
+    }
+
+    function subscribeToUserStock() {
+      if (!state.user) return;
+      try {
+        state.items = JSON.parse(localStorage.getItem(getLocalItemsKey()) || '[]');
+        state.history = JSON.parse(localStorage.getItem(getLocalHistoryKey()) || '[]');
+        renderDashboard();
+      } catch (e) {}
+
+      if (useCloudMode && db && auth?.currentUser) {
+        const uid = auth.currentUser.uid;
+        const itemsCol = collection(db, 'artifacts', appId, 'users', uid, 'inventory');
+        const historyCol = collection(db, 'artifacts', appId, 'users', uid, 'history');
+
+        state.unsubscribeItems = onSnapshot(itemsCol, (snapshot) => {
+          const cloudItems = [];
+          snapshot.forEach(docSnap => cloudItems.push({ id: docSnap.id, ...docSnap.data() }));
+          cloudItems.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+          state.items = cloudItems;
+          localStorage.setItem(getLocalItemsKey(), JSON.stringify(state.items));
+          renderDashboard();
+        }, (err) => console.warn("Cloud items listener fallback:", err));
+
+        state.unsubscribeHistory = onSnapshot(historyCol, (snapshot) => {
+          const cloudHistory = [];
+          snapshot.forEach(docSnap => cloudHistory.push({ id: docSnap.id, ...docSnap.data() }));
+          cloudHistory.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          state.history = cloudHistory;
+          localStorage.setItem(getLocalHistoryKey(), JSON.stringify(state.history));
+        }, (err) => console.warn("Cloud history listener fallback:", err));
+      }
+    }
+
+    async function persistItemOperation(opType, itemData, historyEntry) {
+      if (opType === 'upsert') {
+        const idx = state.items.findIndex(i => i.id === itemData.id);
+        if (idx >= 0) state.items[idx] = itemData;
+        else state.items.unshift(itemData);
+      } else if (opType === 'delete') {
+        state.items = state.items.filter(i => i.id !== itemData.id);
+      }
+
+      if (historyEntry) {
+        state.history.unshift(historyEntry);
+        localStorage.setItem(getLocalHistoryKey(), JSON.stringify(state.history));
+      }
+      localStorage.setItem(getLocalItemsKey(), JSON.stringify(state.items));
+      renderDashboard();
+
+      if (useCloudMode && db && auth?.currentUser && isEffectivelyOnline()) {
+        try {
+          const uid = auth.currentUser.uid;
+          if (opType === 'upsert') {
+            await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'inventory', itemData.id), itemData);
+          } else if (opType === 'delete') {
+            await deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'inventory', itemData.id));
+          }
+          if (historyEntry) {
+            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'history'), historyEntry);
+          }
+        } catch (err) {
+          state.offlineQueue.push({ opType, itemData, historyEntry });
+          saveOfflineQueue();
+        }
+      } else if (useCloudMode && !isEffectivelyOnline()) {
+        state.offlineQueue.push({ opType, itemData, historyEntry });
+        saveOfflineQueue();
+      }
+    }
+
+    async function flushOfflineQueue() {
+      if (!useCloudMode || !db || !auth?.currentUser || !isEffectivelyOnline() || state.offlineQueue.length === 0) {
+        return;
+      }
+      const uid = auth.currentUser.uid;
+      const queueCopy = [...state.offlineQueue];
+      state.offlineQueue = [];
+      saveOfflineQueue();
+
+      for (const task of queueCopy) {
+        try {
+          if (task.opType === 'upsert') {
+            await setDoc(doc(db, 'artifacts', appId, 'users', uid, 'inventory', task.itemData.id), task.itemData);
+          } else if (task.opType === 'delete') {
+            await deleteDoc(doc(db, 'artifacts', appId, 'users', uid, 'inventory', task.itemData.id));
+          }
+          if (task.historyEntry) {
+            const syncedEntry = { ...task.historyEntry, offlineSynced: false };
+            await addDoc(collection(db, 'artifacts', appId, 'users', uid, 'history'), syncedEntry);
+          }
+        } catch (e) {
+          state.offlineQueue.push(task);
+        }
+      }
+      saveOfflineQueue();
+      if (state.offlineQueue.length === 0) {
+        showToast('Offline ledger synced to Cloud.', 'success');
+      }
+    }
+
+    // --- Quick +/- Inline Stock Adjustment ---
+    window.quickAdjustItemStock = async function(itemId, delta) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+      const currentQty = Number(item.quantity) || 0;
+      if (delta < 0 && currentQty <= 0) {
+        showToast(`"${item.name}" is already at 0 stock.`, 'warning');
+        return;
+      }
+      const nextQty = Math.max(0, currentQty + delta);
+      const updated = { ...item, quantity: nextQty, updatedAt: Date.now() };
+      const historyObj = {
+        type: delta > 0 ? 'IN' : 'OUT',
+        itemName: item.name,
+        quantity: Math.abs(delta),
+        resultingStock: nextQty,
+        image: item.image || null,
+        timestamp: Date.now(),
+        offlineSynced: !isEffectivelyOnline()
+      };
+      await persistItemOperation('upsert', updated, historyObj);
+      if (delta < 0 && nextQty <= Number(item.threshold ?? 5)) {
+        showToast(`Low Stock Alert: "${item.name}" (${nextQty} left)`, 'warning');
+      }
+    };
+
+    // --- Dashboard Rendering ---
+    window.setStockFilter = function(filter) {
+      state.filter = filter;
+      document.getElementById('card-total-stock').classList.toggle('border-champagne-500/45', filter === 'all');
+      document.getElementById('card-total-stock').classList.toggle('hairline-border', filter !== 'all');
+      document.getElementById('card-low-stock').classList.toggle('border-rose-500/50', filter === 'low');
+      document.getElementById('card-low-stock').classList.toggle('hairline-border', filter !== 'low');
+      renderDashboard();
+    };
+
+    window.clearSearch = function() {
+      document.getElementById('search-input').value = '';
+      renderStockList();
+    };
+
+    function renderDashboard() {
+      const totalSKUs = state.items.length;
+      const totalQty = state.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+      const lowItems = state.items.filter(item => Number(item.quantity) <= Number(item.threshold ?? 5));
+
+      document.getElementById('unique-items-badge').textContent = `${totalSKUs} SKUs`;
+      document.getElementById('total-stock-qty').textContent = totalQty.toLocaleString();
+      document.getElementById('low-stock-count').textContent = lowItems.length;
+      document.getElementById('low-stock-pill').textContent = `${lowItems.length} Alert${lowItems.length === 1 ? '' : 's'}`;
+
+      const categories = [...new Set(state.items.map(i => i.category).filter(Boolean))];
+      const pillsContainer = document.getElementById('category-pills');
+
+      const pillClass = (active, isRose = false) => {
+        if (active && isRose) return 'px-3 py-1.5 rounded-xl text-[11px] font-bold bg-rose-500 text-white shrink-0 transition';
+        if (active) return 'px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-900 dark:bg-champagne-500 text-white dark:text-obsidian-950 shrink-0 transition';
+        return 'px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-white dark:bg-obsidian-900 border hairline-border text-slate-600 dark:text-slate-300 shrink-0 transition';
+      };
+
+      pillsContainer.innerHTML = `
+        <button onclick="setStockFilter('all')" class="${pillClass(state.filter === 'all')}">All Items</button>
+        <button onclick="setStockFilter('low')" class="${pillClass(state.filter === 'low', true)}">Low Stock (${lowItems.length})</button>
+        <button onclick="setStockFilter('instock')" class="${pillClass(state.filter === 'instock')}">In Stock</button>
+        ${categories.map(cat => `
+          <button onclick="setStockFilter('cat:${cat}')" class="${pillClass(state.filter === 'cat:' + cat)}">${cat}</button>
+        `).join('')}
+      `;
+
+      renderStockList();
+    }
+
+    window.renderStockList = function() {
+      const container = document.getElementById('stock-list-container');
+      const query = document.getElementById('search-input').value.trim().toLowerCase();
+      document.getElementById('clear-search-btn').classList.toggle('hidden', !query);
+
+      let filtered = [...state.items];
+      if (state.filter === 'low') {
+        filtered = filtered.filter(i => Number(i.quantity) <= Number(i.threshold ?? 5));
+        document.getElementById('list-heading').textContent = 'Low Stock Alerts';
+      } else if (state.filter === 'instock') {
+        filtered = filtered.filter(i => Number(i.quantity) > Number(i.threshold ?? 5));
+        document.getElementById('list-heading').textContent = 'Healthy Stock';
+      } else if (state.filter.startsWith('cat:')) {
+        const cat = state.filter.slice(4);
+        filtered = filtered.filter(i => i.category === cat);
+        document.getElementById('list-heading').textContent = `${cat} Category`;
+      } else {
+        document.getElementById('list-heading').textContent = 'All Inventory';
+      }
+
+      if (query) {
+        filtered = filtered.filter(i =>
+          i.name.toLowerCase().includes(query) ||
+          (i.extractedText && i.extractedText.toLowerCase().includes(query)) ||
+          (i.designDetails && i.designDetails.toLowerCase().includes(query)) ||
+          (i.category && i.category.toLowerCase().includes(query))
+        );
+      }
+
+      if (filtered.length === 0) {
+        container.className = 'space-y-2.5';
+        container.innerHTML = `
+          <div class="p-8 rounded-[26px] border border-dashed hairline-border bg-white/60 dark:bg-obsidian-900/50 text-center space-y-2.5 my-3">
+            <div class="w-12 h-12 rounded-2xl bg-champagne-500/12 text-champagne-500 flex items-center justify-center mx-auto">
+              <i data-lucide="scan-line" class="w-6 h-6"></i>
+            </div>
+            <p class="text-sm font-extrabold">No Inventory Items Found</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-[240px] mx-auto leading-relaxed">Tap <strong>Stock IN</strong> below to capture a photo with Vision AI OCR or log an individual variant manually.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      if (state.viewDensity === 'grid') {
+        container.className = 'grid grid-cols-2 gap-2.5';
+        container.innerHTML = filtered.map(item => {
+          const isLow = Number(item.quantity) <= Number(item.threshold ?? 5);
+          const thumbHtml = item.image
+            ? `<img src="${item.image}" alt="${item.name}" class="w-full h-28 object-cover rounded-xl bg-alabaster-100 dark:bg-obsidian-800 border hairline-border" />`
+            : `<div class="w-full h-28 rounded-xl bg-alabaster-100 dark:bg-obsidian-800 flex items-center justify-center text-slate-400 border hairline-border"><i data-lucide="package" class="w-7 h-7"></i></div>`;
+
+          const ocrBadge = item.extractedText
+            ? `<span class="inline-block mt-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emeraldNeon-400 border border-emerald-500/25 text-[9px] font-extrabold truncate max-w-full">"${item.extractedText}"</span>`
+            : '';
+
+          return `
+            <div class="p-3 rounded-[22px] bg-white dark:bg-obsidian-900 border ${isLow ? 'border-rose-500/45' : 'hairline-border'} flex flex-col justify-between gap-2.5 shadow-xs">
+              <div class="space-y-2">
+                <div class="relative">
+                  ${thumbHtml}
+                  <button onclick="openEditModal('${item.id}')" class="absolute top-1.5 right-1.5 p-1.5 rounded-lg bg-obsidian-950/75 text-white backdrop-blur-md">
+                    <i data-lucide="pencil" class="w-3 h-3"></i>
+                  </button>
+                  ${isLow ? `<span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-rose-500 text-white text-[9px] font-extrabold uppercase">Low</span>` : ''}
+                </div>
+                <div>
+                  <h4 class="text-xs font-extrabold truncate">${item.name}</h4>
+                  ${ocrBadge}
+                  <p class="text-[10px] text-slate-400 truncate mt-0.5">${item.designDetails || item.category || 'General'}</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1.5 border-t hairline-border">
+                <span class="text-sm font-extrabold tabular-nums ${isLow ? 'text-rose-500' : ''}">${item.quantity}</span>
+                <div class="flex items-center gap-1">
+                  <button onclick="quickAdjustItemStock('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-alabaster-100 dark:bg-obsidian-800 font-bold text-xs flex items-center justify-center active:scale-90 transition">-</button>
+                  <button onclick="quickAdjustItemStock('${item.id}', 1)" class="w-7 h-7 rounded-lg bg-alabaster-100 dark:bg-obsidian-800 font-bold text-xs flex items-center justify-center active:scale-90 transition">+</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        container.className = 'space-y-2.5';
+        container.innerHTML = filtered.map(item => {
+          const isLow = Number(item.quantity) <= Number(item.threshold ?? 5);
+          const thumbHtml = item.image
+            ? `<img src="${item.image}" alt="${item.name}" class="w-14 h-14 rounded-2xl object-cover bg-alabaster-100 dark:bg-obsidian-800 shrink-0 border hairline-border" />`
+            : `<div class="w-14 h-14 rounded-2xl bg-alabaster-100 dark:bg-obsidian-800 flex items-center justify-center text-slate-400 shrink-0 border hairline-border"><i data-lucide="package" class="w-6 h-6"></i></div>`;
+
+          const ocrChip = item.extractedText
+            ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emeraldNeon-400 border border-emerald-500/25 text-[9px] font-extrabold truncate max-w-[165px]"><i data-lucide="type" class="w-2.5 h-2.5 shrink-0"></i>${item.extractedText}</span>`
+            : '';
+
+          return `
+            <div class="p-3 rounded-[22px] bg-white dark:bg-obsidian-900 border ${isLow ? 'border-rose-500/45' : 'hairline-border'} flex items-center justify-between gap-3 shadow-xs transition">
+              <div class="flex items-center gap-3 min-w-0">
+                ${thumbHtml}
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <h4 class="text-xs font-extrabold truncate">${item.name}</h4>
+                    ${isLow ? `<span class="px-1.5 py-0.5 rounded-md bg-rose-500/12 text-rose-500 text-[9px] font-extrabold uppercase shrink-0">Low</span>` : ''}
+                  </div>
+                  <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                    ${ocrChip}
+                    <span class="text-[10px] text-slate-400 truncate">${item.designDetails ? item.designDetails : `${item.category || 'General'} · Alert ≤ ${item.threshold ?? 5}`}</span>
+                  </div>
+                  <button onclick="openEditModal('${item.id}')" class="mt-1 text-[10px] font-bold text-champagne-600 dark:text-champagne-400 hover:underline inline-flex items-center gap-1">
+                    <i data-lucide="pencil" class="w-2.5 h-2.5"></i>
+                    <span>Edit Variant</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="flex flex-col items-end">
+                  <span class="text-base font-extrabold tabular-nums ${isLow ? 'text-rose-500' : 'text-slate-900 dark:text-white'}">${item.quantity}</span>
+                  <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400">units</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <button onclick="quickAdjustItemStock('${item.id}', 1)" class="w-7 h-6 rounded-lg bg-alabaster-100 dark:bg-obsidian-800 hover:bg-champagne-500/20 text-xs font-extrabold flex items-center justify-center active:scale-90 transition">+</button>
+                  <button onclick="quickAdjustItemStock('${item.id}', -1)" class="w-7 h-6 rounded-lg bg-alabaster-100 dark:bg-obsidian-800 hover:bg-rose-500/20 text-xs font-extrabold flex items-center justify-center active:scale-90 transition">-</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      lucide.createIcons();
+    };
+
+    // --- Camera, Perceptual Image Fingerprinting & Compression ---
+    function computeImageFingerprint(img) {
+      try {
+        const size = 16;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        const data = ctx.getImageData(0, 0, size, size).data;
+
+        const lum = [];
+        let rSum = 0, gSum = 0, bSum = 0;
+        let centerLum = 0, ringLum = 0, outerLum = 0;
+        let centerCnt = 0, ringCnt = 0, outerCnt = 0;
+
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            const idx = (y * size + x) * 4;
+            const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+            rSum += r; gSum += g; bSum += b;
+            const l = 0.299 * r + 0.587 * g + 0.114 * b;
+            lum.push(l);
+
+            const dx = (x - 7.5) / 7.5;
+            const dy = (y - 7.5) / 7.5;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 0.38) { centerLum += l; centerCnt++; }
+            else if (dist < 0.78) { ringLum += l; ringCnt++; }
+            else { outerLum += l; outerCnt++; }
+          }
+        }
+
+        const totalPx = size * size;
+        const meanLum = lum.reduce((a, b) => a + b, 0) / totalPx;
+        const hashBits = lum.map(v => (v >= meanLum ? '1' : '0')).join('');
+
+        // Edge energy (horizontal + vertical gradient contrast)
+        let edgeSum = 0;
+        for (let y = 0; y < size - 1; y++) {
+          for (let x = 0; x < size - 1; x++) {
+            const c = lum[y * size + x];
+            edgeSum += Math.abs(c - lum[y * size + (x + 1)]) + Math.abs(c - lum[(y + 1) * size + x]);
+          }
+        }
+
+        return {
+          hash: hashBits,
+          avgRgb: [Math.round(rSum / totalPx), Math.round(gSum / totalPx), Math.round(bSum / totalPx)],
+          radial: [
+            Math.round(centerLum / Math.max(1, centerCnt)),
+            Math.round(ringLum / Math.max(1, ringCnt)),
+            Math.round(outerLum / Math.max(1, outerCnt))
+          ],
+          edgeDensity: Math.round(edgeSum / totalPx)
+        };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function compareFingerprints(fpA, fpB) {
+      if (!fpA || !fpB || !fpA.hash || !fpB.hash) return 0;
+      let sameBits = 0;
+      const len = Math.min(fpA.hash.length, fpB.hash.length);
+      for (let i = 0; i < len; i++) {
+        if (fpA.hash[i] === fpB.hash[i]) sameBits++;
+      }
+      const hashSim = sameBits / len;
+
+      const colorDist = Math.sqrt(
+        Math.pow(fpA.avgRgb[0] - fpB.avgRgb[0], 2) +
+        Math.pow(fpA.avgRgb[1] - fpB.avgRgb[1], 2) +
+        Math.pow(fpA.avgRgb[2] - fpB.avgRgb[2], 2)
+      );
+      const colorSim = Math.max(0, 1 - colorDist / 220);
+
+      const radialDist =
+        Math.abs(fpA.radial[0] - fpB.radial[0]) +
+        Math.abs(fpA.radial[1] - fpB.radial[1]) +
+        Math.abs(fpA.radial[2] - fpB.radial[2]);
+      const radialSim = Math.max(0, 1 - radialDist / 300);
+
+      const edgeSim = Math.max(0, 1 - Math.abs((fpA.edgeDensity || 0) - (fpB.edgeDensity || 0)) / 90);
+
+      return Math.round((hashSim * 0.45 + colorSim * 0.25 + radialSim * 0.15 + edgeSim * 0.15) * 100);
+    }
+
+    function compressImageDataUrl(dataUrl) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const fingerprint = computeImageFingerprint(img);
+          const qualityMap = {
+            low: { maxDim: 360, jpegQual: 0.55 },
+            medium: { maxDim: 640, jpegQual: 0.72 },
+            high: { maxDim: 1024, jpegQual: 0.88 }
+          };
+          const cfg = qualityMap[state.photoQuality] || qualityMap.medium;
+          let { width, height } = img;
+          if (width > cfg.maxDim || height > cfg.maxDim) {
+            if (width > height) {
+              height = Math.round((height * cfg.maxDim) / width);
+              width = cfg.maxDim;
+            } else {
+              width = Math.round((width * cfg.maxDim) / height);
+              height = cfg.maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve({
+            dataUrl: canvas.toDataURL('image/jpeg', cfg.jpegQual),
+            fingerprint
+          });
+        };
+        img.src = dataUrl;
+      });
+    }
+
+    window.startCamera = async function() {
+      try {
+        if (state.cameraStream) {
+          state.cameraStream.getTracks().forEach(t => t.stop());
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: state.cameraFacingMode },
+          audio: false
+        });
+        state.cameraStream = stream;
+        const video = document.getElementById('camera-video');
+        video.srcObject = stream;
+        document.getElementById('camera-container').classList.remove('hidden');
+        document.getElementById('capture-buttons-row').classList.add('hidden');
+      } catch (err) {
+        showToast('Camera unavailable — opening Gallery / Storage picker.', 'warning');
+        document.getElementById('gallery-file-input').click();
+      }
+    };
+
+    window.flipCameraFacing = async function() {
+      state.cameraFacingMode = state.cameraFacingMode === 'environment' ? 'user' : 'environment';
+      await startCamera();
+    };
+
+    window.stopCamera = function() {
+      if (state.cameraStream) {
+        state.cameraStream.getTracks().forEach(t => t.stop());
+        state.cameraStream = null;
+      }
+      document.getElementById('camera-container').classList.add('hidden');
+      if (!state.capturedImageBase64) {
+        document.getElementById('capture-buttons-row').classList.remove('hidden');
+      }
+    };
+
+    window.captureFromCamera = async function() {
+      const video = document.getElementById('camera-video');
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      const rawDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      state.lastUploadedFilename = '';
+      stopCamera();
+      await processCapturedPhoto(rawDataUrl);
+    };
+
+    window.handleFileUpload = async function(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      state.lastUploadedFilename = file.name || '';
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        await processCapturedPhoto(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.resetCapturedImage = function() {
+      state.capturedImageBase64 = null;
+      state.capturedFingerprint = null;
+      state.pendingNewSuggestion = null;
+      state.selectedCandidateId = null;
+      document.getElementById('preview-container').classList.add('hidden');
+      document.getElementById('laser-overlay').classList.add('hidden');
+      document.getElementById('capture-buttons-row').classList.remove('hidden');
+      document.getElementById('ai-match-banner').classList.add('hidden');
+      document.getElementById('ai-disambiguation-card').classList.add('hidden');
+      document.getElementById('gallery-file-input').value = '';
+    };
+
+    async function processCapturedPhoto(rawDataUrl) {
+      const { dataUrl: compressed, fingerprint } = await compressImageDataUrl(rawDataUrl);
+      state.capturedImageBase64 = compressed;
+      state.capturedFingerprint = fingerprint;
+
+      document.getElementById('captured-preview-img').src = compressed;
+      document.getElementById('preview-container').classList.remove('hidden');
+      document.getElementById('capture-buttons-row').classList.add('hidden');
+
+      if (!isEffectivelyOnline()) {
+        runLocalVisualComparisonFallback(fingerprint);
+        return;
+      }
+
+      await analyzeImageWithGemini(compressed, fingerprint);
+    }
+
+    // --- Local Visual / Offline Fallback Matcher (Prevents Blind Merging) ---
+    function runLocalVisualComparisonFallback(fingerprint) {
+      const scored = state.items
+        .map(item => ({
+          item,
+          score: item.fingerprint ? compareFingerprints(fingerprint, item.fingerprint) : 0
+        }))
+        .filter(x => x.score >= 52)
+        .sort((a, b) => b.score - a.score);
+
+      if (scored.length > 0) {
+        const candidates = scored.slice(0, 3).map(s => ({
+          id: s.item.id,
+          similarity: s.score,
+          reason: `${s.score}% visual silhouette/color match — verify embossed text before merging`
+        }));
+        const fallbackSuggestion = {
+          suggestedName: '',
+          extractedText: '',
+          designDetails: 'Offline manual capture',
+          category: scored[0].item.category || 'General',
+          suggestedThreshold: scored[0].item.threshold ?? 5
+        };
+        showDisambiguationPrompt(
+          candidates,
+          fallbackSuggestion,
+          'Offline visual scan found similar silhouette/color items. Select an existing SKU or list as a new variant.'
+        );
+      } else {
+        showToast('Offline · Manual Mode: Enter variant name & embossed text below.', 'warning');
+      }
+    }
+
+    // --- Gemini AI Fine-Grained Vision + Embossed Text (OCR) + Disambiguation ---
+    async function analyzeImageWithGemini(base64DataUrl, fingerprint) {
+      const loader = document.getElementById('ai-scanning-loader');
+      const laser = document.getElementById('laser-overlay');
+      const banner = document.getElementById('ai-match-banner');
+      const disambigCard = document.getElementById('ai-disambiguation-card');
+
+      loader.classList.remove('hidden');
+      laser.classList.remove('hidden');
+      banner.classList.add('hidden');
+      disambigCard.classList.add('hidden');
+
+      const base64Clean = base64DataUrl.split(',')[1];
+      const existingCatalog = state.items.map(i => ({
+        id: i.id,
+        name: i.name,
+        extractedText: i.extractedText || '',
+        designDetails: i.designDetails || '',
+        category: i.category || 'General',
+        quantity: i.quantity,
+        threshold: i.threshold ?? 5
+      }));
+
+      const prompt = `You are a high-precision Industrial & Apparel Vision AI Inventory Inspector with micro-OCR capability.
+Your #1 job is to distinguish DIFFERENT variants of visually similar hardware/items (such as different embossed black jeans buttons, rivets, labels, electronic parts, or bottles) so they NEVER merge into the wrong SKU!
+
+Step 1 — MICRO-OCR & SURFACE RELIEF INSPECTION:
+- Read EVERY embossed, debossed, stamped, or printed word/number on the item (even curved or upside-down text around rims or banners, such as "DENIM CO.", "ESTD 1966 JEANS DENIM", "JEANS WEAR", serial codes, or brand logos). Put the exact readable text in "extractedText".
+- Describe the physical design & surface relief in "designDetails" (e.g., "Matte black circular shank button, central chevron logo, single outer rim", or "Glossy black double-ring button with curved rim text", or "Black button with diagonal rectangular banner").
+- Create a specific variant SKU name in "suggestedName" combining the item type + extracted text (e.g., 'Jeans Button — "DENIM CO."' or 'Jeans Button — "ESTD 1966 JEANS DENIM"' or 'Jeans Button — "JEANS WEAR"'). If no text exists, describe the unique motif.
+
+Step 2 — COMPARE AGAINST EXISTING SAVED INVENTORY:
+${JSON.stringify(existingCatalog)}
+
+- Only set "exactMatchId" if BOTH the physical design AND the embossed/printed text ("extractedText") match an existing saved item with >= 90% certainty!
+- If an existing saved item has the same base product/color (e.g., another black Jeans Button) OR has different/unclear embossed text, OR you are between 45% and 89% confident, set "isAmbiguous": true, set "exactMatchId": null, and list the similar existing items in "similarCandidates" so the user can choose whether to add to an existing SKU or list as a brand-new individual SKU!
+
+Respond ONLY in valid JSON:
+{
+  "exactMatchId": string or null,
+  "isAmbiguous": boolean,
+  "confidence": number,
+  "extractedText": string,
+  "designDetails": string,
+  "suggestedName": string,
+  "category": string,
+  "suggestedThreshold": number,
+  "confidenceNote": string,
+  "similarCandidates": [
+    { "id": string, "similarity": number, "reason": string }
+  ]
+}`;
+
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+      const payload = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  mimeType: "image/jpeg",
+                  data: base64Clean
+                }
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          responseMimeType: "application/json"
+        }
+      };
+
+      let attempt = 0;
+      const delays = [1000, 2000, 4000];
+      let aiResult = null;
+
+      while (attempt < 3) {
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawText) {
+            aiResult = JSON.parse(rawText);
+            break;
+          }
+        } catch (err) {
+          if (attempt < 2) await new Promise(r => setTimeout(r, delays[attempt]));
+        }
+        attempt++;
+      }
+
+      loader.classList.add('hidden');
+      laser.classList.add('hidden');
+
+      if (!aiResult) {
+        runLocalVisualComparisonFallback(fingerprint);
+        return;
+      }
+
+      // Also supplement AI's similarCandidates with perceptual fingerprint similarity for same-category/color items
+      const candidateMap = new Map();
+      if (Array.isArray(aiResult.similarCandidates)) {
+        aiResult.similarCandidates.forEach(c => {
+          const found = state.items.find(i => i.id === c.id);
+          if (found) {
+            candidateMap.set(found.id, {
+              id: found.id,
+              similarity: Math.min(99, Math.max(45, Number(c.similarity) || 72)),
+              reason: c.reason || 'Similar shape/category detected'
+            });
+          }
+        });
+      }
+
+      // Check perceptual similarity & shared base category/name tokens
+      const suggestedLower = (aiResult.suggestedName || '').toLowerCase();
+      const catLower = (aiResult.category || '').toLowerCase();
+      state.items.forEach(item => {
+        if (candidateMap.has(item.id)) return;
+        const fpScore = item.fingerprint ? compareFingerprints(fingerprint, item.fingerprint) : 0;
+        const sameCategory = catLower && (item.category || '').toLowerCase() === catLower;
+        const sharesKeyword = suggestedLower.split(/[\s—\-"]+/).some(tok => tok.length > 3 && item.name.toLowerCase().includes(tok));
+        if (fpScore >= 64 || (sameCategory && sharesKeyword)) {
+          candidateMap.set(item.id, {
+            id: item.id,
+            similarity: Math.max(fpScore, 68),
+            reason: item.extractedText
+              ? `Saved engraving: "${item.extractedText}"`
+              : `Same category (${item.category || 'General'})`
+          });
+        }
+      });
+
+      const exactItem = aiResult.exactMatchId
+        ? state.items.find(i => i.id === aiResult.exactMatchId)
+        : null;
+
+      // Verify exactItem doesn't have conflicting embossed text
+      let verifiedExactItem = exactItem;
+      if (verifiedExactItem && aiResult.extractedText && verifiedExactItem.extractedText) {
+        const normNew = aiResult.extractedText.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        const normOld = verifiedExactItem.extractedText.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        if (normNew && normOld && normNew !== normOld) {
+          // Different embossed text! Do NOT auto-merge; trigger confirmation prompt instead
+          candidateMap.set(verifiedExactItem.id, {
+            id: verifiedExactItem.id,
+            similarity: 74,
+            reason: `Different marking ("${verifiedExactItem.extractedText}" vs "${aiResult.extractedText}")`
+          });
+          verifiedExactItem = null;
+        }
+      }
+
+      const allCandidates = Array.from(candidateMap.values()).sort((a, b) => b.similarity - a.similarity);
+
+      // Update OCR & Design Chips in AI Banner
+      populateAiBannerChips(aiResult);
+
+      if (verifiedExactItem && !aiResult.isAmbiguous) {
+        // High-confidence exact match (both design & embossed text match)
+        document.getElementById('matched-item-id').value = verifiedExactItem.id;
+        document.getElementById('entry-item-name').value = verifiedExactItem.name;
+        document.getElementById('entry-item-ocr').value = verifiedExactItem.extractedText || aiResult.extractedText || '';
+        document.getElementById('entry-item-design').value = verifiedExactItem.designDetails || aiResult.designDetails || '';
+        document.getElementById('entry-item-category').value = verifiedExactItem.category || aiResult.category || 'General';
+        document.getElementById('entry-item-threshold').value = verifiedExactItem.threshold ?? 5;
+        if (state.scanMode === 'OUT') {
+          document.getElementById('manual-stock-out-select').value = verifiedExactItem.id;
+        }
+        banner.classList.remove('hidden');
+        document.getElementById('ai-match-title').textContent = `Exact Variant Match · ${verifiedExactItem.quantity} in stock`;
+        document.getElementById('ai-confidence-pill').textContent = `${aiResult.confidence || 96}% Match`;
+        document.getElementById('ai-match-desc').textContent = aiResult.confidenceNote || `Matched "${verifiedExactItem.name}". All fields remain editable below.`;
+      } else if (allCandidates.length > 0) {
+        // AI found similar variants or is unsure whether to merge or list as new SKU
+        banner.classList.remove('hidden');
+        document.getElementById('ai-match-title').textContent = aiResult.extractedText
+          ? `Detected Text: "${aiResult.extractedText}"`
+          : 'New Variant Analyzed';
+        document.getElementById('ai-confidence-pill').textContent = 'Confirm SKU';
+        document.getElementById('ai-match-desc').textContent = aiResult.confidenceNote || 'Review similar items below to add to an existing SKU or list separately.';
+
+        showDisambiguationPrompt(
+          allCandidates,
+          aiResult,
+          state.scanMode === 'IN'
+            ? 'Similar item(s) exist in your inventory. Add stock to an existing SKU or list this as a new individual item?'
+            : 'Multiple similar variants exist. Confirm which exact SKU to deduct stock from:'
+        );
+      } else {
+        // Brand-new distinct item with no similar conflicts
+        document.getElementById('matched-item-id').value = '';
+        document.getElementById('entry-item-name').value = aiResult.suggestedName || '';
+        document.getElementById('entry-item-ocr').value = aiResult.extractedText || '';
+        document.getElementById('entry-item-design').value = aiResult.designDetails || '';
+        document.getElementById('entry-item-category').value = aiResult.category || 'General';
+        document.getElementById('entry-item-threshold').value = aiResult.suggestedThreshold || 5;
+
+        banner.classList.remove('hidden');
+        document.getElementById('ai-match-title').textContent = state.scanMode === 'IN'
+          ? 'New Individual SKU Ready'
+          : 'No Matching Saved SKU';
+        document.getElementById('ai-confidence-pill').textContent = aiResult.extractedText ? 'OCR Extracted' : 'AI Suggested';
+        document.getElementById('ai-match-desc').textContent = aiResult.confidenceNote || 'Verify the extracted text and product name below.';
+      }
+
+      lucide.createIcons();
+    }
+
+    function populateAiBannerChips(aiResult) {
+      const chipsRow = document.getElementById('ai-extracted-chips');
+      const ocrChip = document.getElementById('ai-ocr-chip');
+      const designChip = document.getElementById('ai-design-chip');
+
+      const hasOcr = Boolean(aiResult.extractedText && aiResult.extractedText.trim());
+      const hasDesign = Boolean(aiResult.designDetails && aiResult.designDetails.trim());
+
+      if (hasOcr || hasDesign) {
+        chipsRow.classList.remove('hidden');
+        if (hasOcr) {
+          ocrChip.classList.remove('hidden');
+          document.getElementById('ai-ocr-chip-text').textContent = `"${aiResult.extractedText.trim()}"`;
+        } else {
+          ocrChip.classList.add('hidden');
+        }
+        if (hasDesign) {
+          designChip.classList.remove('hidden');
+          document.getElementById('ai-design-chip-text').textContent = aiResult.designDetails.trim();
+        } else {
+          designChip.classList.add('hidden');
+        }
+      } else {
+        chipsRow.classList.add('hidden');
+      }
+    }
+
+    // --- Interactive "AI Needs Confirmation" Disambiguation Flow ---
+    function showDisambiguationPrompt(candidates, newSuggestion, subtitleText) {
+      state.pendingNewSuggestion = newSuggestion;
+      state.selectedCandidateId = candidates[0]?.id || null;
+
+      // Pre-fill form with the newly extracted SKU details by default in Stock IN
+      if (state.scanMode === 'IN') {
+        document.getElementById('matched-item-id').value = '';
+        document.getElementById('entry-item-name').value = newSuggestion.suggestedName || '';
+        document.getElementById('entry-item-ocr').value = newSuggestion.extractedText || '';
+        document.getElementById('entry-item-design').value = newSuggestion.designDetails || '';
+        document.getElementById('entry-item-category').value = newSuggestion.category || 'General';
+        document.getElementById('entry-item-threshold').value = newSuggestion.suggestedThreshold || 5;
+      } else if (state.selectedCandidateId) {
+        selectExistingItemForOut(state.selectedCandidateId);
+      }
+
+      const card = document.getElementById('ai-disambiguation-card');
+      const listEl = document.getElementById('disambiguation-candidates');
+      const actionsEl = document.getElementById('disambiguation-actions');
+      document.getElementById('disambiguation-subtitle').textContent = subtitleText;
+
+      if (state.scanMode === 'OUT') {
+        actionsEl.innerHTML = `
+          <button type="button" onclick="confirmDisambiguationExisting()" class="col-span-2 py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-obsidian-950 font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-sm transition active:scale-[0.98]">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+            <span>Use Selected Existing Variant for Stock OUT</span>
+          </button>
+        `;
+      } else {
+        actionsEl.innerHTML = `
+          <button type="button" onclick="confirmDisambiguationExisting()" class="py-2.5 px-3 rounded-xl bg-white dark:bg-obsidian-950 hover:bg-alabaster-100 dark:hover:bg-obsidian-800 border hairline-border text-slate-900 dark:text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 transition active:scale-[0.98]">
+            <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-500"></i>
+            <span>Add to Selected</span>
+          </button>
+          <button type="button" onclick="confirmDisambiguationNew()" class="py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-obsidian-950 font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-sm transition active:scale-[0.98]">
+            <i data-lucide="plus-square" class="w-3.5 h-3.5"></i>
+            <span>List as New SKU</span>
+          </button>
+        `;
+      }
+
+      renderDisambiguationCandidates(candidates);
+      card.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function renderDisambiguationCandidates(candidates) {
+      const listEl = document.getElementById('disambiguation-candidates');
+      listEl.innerHTML = candidates.map(c => {
+        const item = state.items.find(i => i.id === c.id);
+        if (!item) return '';
+        const isSelected = state.selectedCandidateId === item.id;
+        return `
+          <div onclick="selectDisambiguationCandidate('${item.id}')" class="p-2.5 rounded-xl bg-white dark:bg-obsidian-950 border ${isSelected ? 'border-amber-500 ring-2 ring-amber-500/25' : 'hairline-border'} flex items-center justify-between gap-2.5 cursor-pointer transition">
+            <div class="flex items-center gap-2.5 min-w-0">
+              ${item.image
+                ? `<img src="${item.image}" class="w-10 h-10 rounded-lg object-cover shrink-0 border hairline-border" />`
+                : `<div class="w-10 h-10 rounded-lg bg-alabaster-100 dark:bg-obsidian-800 flex items-center justify-center text-slate-400 shrink-0"><i data-lucide="package" class="w-4 h-4"></i></div>`
+              }
+              <div class="min-w-0">
+                <p class="text-xs font-extrabold truncate">${item.name}</p>
+                <div class="flex flex-wrap items-center gap-1 mt-0.5">
+                  ${item.extractedText ? `<span class="px-1.5 py-0.2 rounded bg-emerald-500/12 text-emerald-700 dark:text-emeraldNeon-400 text-[9px] font-extrabold">"${item.extractedText}"</span>` : ''}
+                  <span class="text-[10px] text-slate-400 truncate">${c.reason}</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="block text-[10px] font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">${c.similarity}%</span>
+              <span class="block text-[10px] font-bold text-slate-400 tabular-nums">${item.quantity} in stock</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.selectDisambiguationCandidate = function(itemId) {
+      state.selectedCandidateId = itemId;
+      const cards = document.querySelectorAll('#disambiguation-candidates > div');
+      cards.forEach(el => {
+        const active = el.getAttribute('onclick')?.includes(`'${itemId}'`);
+        el.classList.toggle('border-amber-500', active);
+        el.classList.toggle('ring-2', active);
+        el.classList.toggle('ring-amber-500/25', active);
+      });
+    };
+
+    window.confirmDisambiguationExisting = function() {
+      const item = state.items.find(i => i.id === state.selectedCandidateId);
+      if (!item) {
+        showToast('Please tap one of the similar items above first.', 'warning');
+        return;
+      }
+      document.getElementById('matched-item-id').value = item.id;
+      document.getElementById('entry-item-name').value = item.name;
+      document.getElementById('entry-item-ocr').value = item.extractedText || '';
+      document.getElementById('entry-item-design').value = item.designDetails || '';
+      document.getElementById('entry-item-category').value = item.category || 'General';
+      document.getElementById('entry-item-threshold').value = item.threshold ?? 5;
+      if (state.scanMode === 'OUT') {
+        document.getElementById('manual-stock-out-select').value = item.id;
+      }
+      document.getElementById('ai-disambiguation-card').classList.add('hidden');
+      showToast(`Linked to existing SKU: "${item.name}"`, 'success');
+    };
+
+    window.confirmDisambiguationNew = function() {
+      const sug = state.pendingNewSuggestion || {};
+      document.getElementById('matched-item-id').value = '';
+      if (sug.suggestedName) document.getElementById('entry-item-name').value = sug.suggestedName;
+      if (sug.extractedText) document.getElementById('entry-item-ocr').value = sug.extractedText;
+      if (sug.designDetails) document.getElementById('entry-item-design').value = sug.designDetails;
+      if (sug.category) document.getElementById('entry-item-category').value = sug.category;
+      document.getElementById('ai-disambiguation-card').classList.add('hidden');
+      showToast('Listing as a separate new individual SKU.', 'info');
+      focusAndSelect('entry-item-name');
+    };
+
+    // --- Stock IN / OUT Modal Sheet ---
+    window.openScanModal = function(mode) {
+      state.scanMode = mode;
+      state.capturedImageBase64 = null;
+      state.capturedFingerprint = null;
+      state.pendingNewSuggestion = null;
+      state.selectedCandidateId = null;
+
+      document.getElementById('stock-entry-form').reset();
+      document.getElementById('matched-item-id').value = '';
+      document.getElementById('entry-item-qty').value = 1;
+      document.getElementById('entry-item-category').value = 'General';
+      document.getElementById('entry-item-threshold').value = 5;
+      document.getElementById('entry-item-ocr').value = '';
+      document.getElementById('entry-item-design').value = '';
+
+      document.getElementById('preview-container').classList.add('hidden');
+      document.getElementById('laser-overlay').classList.add('hidden');
+      document.getElementById('camera-container').classList.add('hidden');
+      document.getElementById('capture-buttons-row').classList.remove('hidden');
+      document.getElementById('ai-scanning-loader').classList.add('hidden');
+      document.getElementById('ai-match-banner').classList.add('hidden');
+      document.getElementById('ai-disambiguation-card').classList.add('hidden');
+
+      const badge = document.getElementById('scan-modal-badge');
+      const title = document.getElementById('scan-modal-title');
+      const qtyLabel = document.getElementById('entry-qty-label');
+      const confirmBtn = document.getElementById('confirm-entry-btn');
+      const helpBox = document.getElementById('stock-out-help-box');
+      const thresholdWrap = document.getElementById('threshold-field-wrap');
+
+      if (mode === 'IN') {
+        badge.className = 'px-2.5 py-1 rounded-xl text-[10px] font-extrabold tracking-wider bg-champagne-500/15 text-champagne-600 dark:text-champagne-400';
+        badge.textContent = 'STOCK IN (+)';
+        title.textContent = 'Scan or Log Individual Variant';
+        qtyLabel.textContent = 'Quantity to Add *';
+        confirmBtn.className = 'w-full py-3.5 rounded-2xl bg-slate-900 dark:bg-gradient-to-r dark:from-champagne-500 dark:to-champagne-400 hover:opacity-95 active:scale-[0.99] text-white dark:text-obsidian-950 font-extrabold text-sm shadow-lg transition mt-2';
+        confirmBtn.textContent = 'Confirm Stock IN';
+        helpBox.classList.add('hidden');
+        thresholdWrap.classList.remove('hidden');
+      } else {
+        badge.className = 'px-2.5 py-1 rounded-xl text-[10px] font-extrabold tracking-wider bg-rose-500/15 text-rose-500';
+        badge.textContent = 'STOCK OUT (-)';
+        title.textContent = 'Scan or Select Individual Variant';
+        qtyLabel.textContent = 'Quantity to Remove *';
+        confirmBtn.className = 'w-full py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white font-extrabold text-sm shadow-lg shadow-rose-500/20 transition mt-2';
+        confirmBtn.textContent = 'Confirm Stock OUT';
+        helpBox.classList.remove('hidden');
+        thresholdWrap.classList.add('hidden');
+
+        // Populate Help · Select Individual Variant strip & dropdown with OCR markings
+        const strip = document.getElementById('stock-out-visual-candidates');
+        strip.innerHTML = state.items.map(i => `
+          <button type="button" onclick="selectExistingItemForOut('${i.id}')" class="shrink-0 flex items-center gap-2 p-1.5 pr-2.5 rounded-xl bg-white dark:bg-obsidian-950 border hairline-border hover:border-champagne-500/50 transition text-left">
+            ${i.image
+              ? `<img src="${i.image}" class="w-9 h-9 rounded-lg object-cover" />`
+              : `<div class="w-9 h-9 rounded-lg bg-alabaster-100 dark:bg-obsidian-800 flex items-center justify-center text-slate-400"><i data-lucide="package" class="w-3.5 h-3.5"></i></div>`
+            }
+            <div>
+              <p class="text-[11px] font-bold truncate max-w-[105px]">${i.name}</p>
+              <p class="text-[9px] text-emerald-600 dark:text-emeraldNeon-400 font-bold truncate max-w-[105px]">${i.extractedText ? `"${i.extractedText}"` : `${i.quantity} left`}</p>
+            </div>
+          </button>
+        `).join('');
+
+        const sel = document.getElementById('manual-stock-out-select');
+        sel.innerHTML = `<option value="">-- Choose from saved variants (${state.items.length}) --</option>` +
+          state.items.map(i => `<option value="${i.id}">${i.name}${i.extractedText ? ` ["${i.extractedText}"]` : ''} (${i.quantity} in stock)</option>`).join('');
+      }
+
+      document.getElementById('scan-modal').classList.remove('hidden');
+      lucide.createIcons();
+    };
+
+    window.closeScanModal = function() {
+      stopCamera();
+      document.getElementById('scan-modal').classList.add('hidden');
+    };
+
+    window.selectExistingItemForOut = function(itemId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+      document.getElementById('matched-item-id').value = item.id;
+      document.getElementById('entry-item-name').value = item.name;
+      document.getElementById('entry-item-ocr').value = item.extractedText || '';
+      document.getElementById('entry-item-design').value = item.designDetails || '';
+      document.getElementById('entry-item-category').value = item.category || 'General';
+      document.getElementById('entry-item-threshold').value = item.threshold ?? 5;
+      document.getElementById('manual-stock-out-select').value = item.id;
+      showToast(`Verified "${item.name}" (${item.quantity} available)`, 'info');
+    };
+
+    window.focusAndSelect = function(inputId) {
+      const el = document.getElementById(inputId);
+      el.focus();
+      el.select();
+    };
+
+    window.adjustEntryQty = function(delta) {
+      const input = document.getElementById('entry-item-qty');
+      input.value = Math.max(1, (Number(input.value) || 1) + delta);
+    };
+
+    window.submitStockEntry = async function(e) {
+      e.preventDefault();
+      const name = document.getElementById('entry-item-name').value.trim();
+      const extractedText = document.getElementById('entry-item-ocr').value.trim();
+      const designDetails = document.getElementById('entry-item-design').value.trim();
+      const category = document.getElementById('entry-item-category').value.trim() || 'General';
+      const threshold = Math.max(0, Number(document.getElementById('entry-item-threshold').value) || 5);
+      const qtyDelta = Math.max(1, Number(document.getElementById('entry-item-qty').value) || 1);
+      const matchedId = document.getElementById('matched-item-id').value;
+
+      if (!name) {
+        showToast('Please enter or confirm the variant product name.', 'error');
+        return;
+      }
+
+      let existing = matchedId ? state.items.find(i => i.id === matchedId) : null;
+      if (!existing) {
+        // Only auto-match by exact name + exact embossed text so different variants stay separate!
+        existing = state.items.find(i => {
+          const sameName = i.name.toLowerCase() === name.toLowerCase();
+          const oldOcr = (i.extractedText || '').toLowerCase();
+          const newOcr = extractedText.toLowerCase();
+          return sameName && oldOcr === newOcr;
+        });
+      }
+
+      if (state.scanMode === 'IN') {
+        const newQty = (existing ? Number(existing.quantity) : 0) + qtyDelta;
+        const itemObj = {
+          id: existing ? existing.id : 'itm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          name,
+          extractedText,
+          designDetails,
+          category,
+          quantity: newQty,
+          threshold,
+          image: state.capturedImageBase64 || (existing ? existing.image : null),
+          fingerprint: state.capturedFingerprint || (existing ? existing.fingerprint : null),
+          updatedAt: Date.now()
+        };
+
+        const historyObj = {
+          type: 'IN',
+          itemName: extractedText ? `${name} [${extractedText}]` : name,
+          quantity: qtyDelta,
+          resultingStock: newQty,
+          image: itemObj.image,
+          timestamp: Date.now(),
+          offlineSynced: !isEffectivelyOnline()
+        };
+
+        await persistItemOperation('upsert', itemObj, historyObj);
+        showToast(`+${qtyDelta} "${name}" logged · Total: ${newQty}`, 'success');
+      } else {
+        if (!existing) {
+          showToast('Variant not selected. Pick the exact item in Confirmation or Help above.', 'error');
+          return;
+        }
+        if (Number(existing.quantity) < qtyDelta) {
+          showToast(`Insufficient stock: only ${existing.quantity} units available.`, 'error');
+          return;
+        }
+
+        const newQty = Number(existing.quantity) - qtyDelta;
+        const itemObj = {
+          ...existing,
+          name,
+          extractedText: extractedText || existing.extractedText || '',
+          designDetails: designDetails || existing.designDetails || '',
+          category,
+          quantity: newQty,
+          image: existing.image || state.capturedImageBase64,
+          updatedAt: Date.now()
+        };
+
+        const historyObj = {
+          type: 'OUT',
+          itemName: itemObj.extractedText ? `${name} [${itemObj.extractedText}]` : name,
+          quantity: qtyDelta,
+          resultingStock: newQty,
+          image: itemObj.image,
+          timestamp: Date.now(),
+          offlineSynced: !isEffectivelyOnline()
+        };
+
+        await persistItemOperation('upsert', itemObj, historyObj);
+
+        if (newQty <= Number(itemObj.threshold ?? 5)) {
+          showToast(`Low Stock Warning: "${name}" is at ${newQty} units`, 'warning');
+        } else {
+          showToast(`-${qtyDelta} "${name}" deducted · Remaining: ${newQty}`, 'success');
+        }
+      }
+
+      closeScanModal();
+    };
+
+    // --- Direct Item Edit & Delete ---
+    window.openEditModal = function(itemId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+      document.getElementById('edit-modal-id').value = item.id;
+      document.getElementById('edit-modal-name').value = item.name;
+      document.getElementById('edit-modal-ocr').value = item.extractedText || '';
+      document.getElementById('edit-modal-design').value = item.designDetails || '';
+      document.getElementById('edit-modal-category').value = item.category || 'General';
+      document.getElementById('edit-modal-qty').value = item.quantity;
+      document.getElementById('edit-modal-threshold').value = item.threshold ?? 5;
+      document.getElementById('edit-item-modal').classList.remove('hidden');
+    };
+
+    window.closeEditModal = function() {
+      document.getElementById('edit-item-modal').classList.add('hidden');
+    };
+
+    window.saveDirectItemEdit = async function(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-modal-id').value;
+      const existing = state.items.find(i => i.id === id);
+      if (!existing) return;
+
+      const updated = {
+        ...existing,
+        name: document.getElementById('edit-modal-name').value.trim(),
+        extractedText: document.getElementById('edit-modal-ocr').value.trim(),
+        designDetails: document.getElementById('edit-modal-design').value.trim(),
+        category: document.getElementById('edit-modal-category').value.trim() || 'General',
+        quantity: Math.max(0, Number(document.getElementById('edit-modal-qty').value) || 0),
+        threshold: Math.max(0, Number(document.getElementById('edit-modal-threshold').value) || 0),
+        updatedAt: Date.now()
+      };
+
+      await persistItemOperation('upsert', updated, null);
+      closeEditModal();
+      showToast('Variant SKU updated.', 'success');
+    };
+
+    window.focusAndSelect = function(inputId) {
+      const el = document.getElementById(inputId);
+      el.focus();
+      el.select();
+    };
+
+    window.adjustEntryQty = function(delta) {
+      const input = document.getElementById('entry-item-qty');
+      input.value = Math.max(1, (Number(input.value) || 1) + delta);
+    };
+
+    window.submitStockEntry = async function(e) {
+      e.preventDefault();
+      const name = document.getElementById('entry-item-name').value.trim();
+      const category = document.getElementById('entry-item-category').value.trim() || 'General';
+      const threshold = Math.max(0, Number(document.getElementById('entry-item-threshold').value) || 5);
+      const qtyDelta = Math.max(1, Number(document.getElementById('entry-item-qty').value) || 1);
+      const matchedId = document.getElementById('matched-item-id').value;
+
+      if (!name) {
+        showToast('Please enter or confirm the product name.', 'error');
+        return;
+      }
+
+      let existing = matchedId ? state.items.find(i => i.id === matchedId) : null;
+      if (!existing) {
+        existing = state.items.find(i => i.name.toLowerCase() === name.toLowerCase());
+      }
+
+      if (state.scanMode === 'IN') {
+        const newQty = (existing ? Number(existing.quantity) : 0) + qtyDelta;
+        const itemObj = {
+          id: existing ? existing.id : 'itm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          name,
+          category,
+          quantity: newQty,
+          threshold,
+          image: state.capturedImageBase64 || (existing ? existing.image : null),
+          updatedAt: Date.now()
+        };
+
+        const historyObj = {
+          type: 'IN',
+          itemName: name,
+          quantity: qtyDelta,
+          resultingStock: newQty,
+          image: itemObj.image,
+          timestamp: Date.now(),
+          offlineSynced: !isEffectivelyOnline()
+        };
+
+        await persistItemOperation('upsert', itemObj, historyObj);
+        showToast(`+${qtyDelta} "${name}" logged · Total: ${newQty}`, 'success');
+      } else {
+        if (!existing) {
+          showToast('Item not matched. Use Help · Select Manually above.', 'error');
+          return;
+        }
+        if (Number(existing.quantity) < qtyDelta) {
+          showToast(`Insufficient stock: only ${existing.quantity} units available.`, 'error');
+          return;
+        }
+
+        const newQty = Number(existing.quantity) - qtyDelta;
+        const itemObj = {
+          ...existing,
+          name,
+          category,
+          quantity: newQty,
+          image: existing.image || state.capturedImageBase64,
+          updatedAt: Date.now()
+        };
+
+        const historyObj = {
+          type: 'OUT',
+          itemName: name,
+          quantity: qtyDelta,
+          resultingStock: newQty,
+          image: itemObj.image,
+          timestamp: Date.now(),
+          offlineSynced: !isEffectivelyOnline()
+        };
+
+        await persistItemOperation('upsert', itemObj, historyObj);
+
+        if (newQty <= Number(itemObj.threshold ?? 5)) {
+          showToast(`Low Stock Warning: "${name}" is at ${newQty} units`, 'warning');
+        } else {
+          showToast(`-${qtyDelta} "${name}" deducted · Remaining: ${newQty}`, 'success');
+        }
+      }
+
+      closeScanModal();
+    };
+
+    // --- Direct Item Edit & Delete ---
+    window.openEditModal = function(itemId) {
+      const item = state.items.find(i => i.id === itemId);
+      if (!item) return;
+      document.getElementById('edit-modal-id').value = item.id;
+      document.getElementById('edit-modal-name').value = item.name;
+      document.getElementById('edit-modal-category').value = item.category || 'General';
+      document.getElementById('edit-modal-qty').value = item.quantity;
+      document.getElementById('edit-modal-threshold').value = item.threshold ?? 5;
+      document.getElementById('edit-item-modal').classList.remove('hidden');
+    };
+
+    window.closeEditModal = function() {
+      document.getElementById('edit-item-modal').classList.add('hidden');
+    };
+
+    window.saveDirectItemEdit = async function(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-modal-id').value;
+      const existing = state.items.find(i => i.id === id);
+      if (!existing) return;
+
+      const updated = {
+        ...existing,
+        name: document.getElementById('edit-modal-name').value.trim(),
+        category: document.getElementById('edit-modal-category').value.trim() || 'General',
+        quantity: Math.max(0, Number(document.getElementById('edit-modal-qty').value) || 0),
+        threshold: Math.max(0, Number(document.getElementById('edit-modal-threshold').value) || 0),
+        updatedAt: Date.now()
+      };
+
+      await persistItemOperation('upsert', updated, null);
+      closeEditModal();
+      showToast('Inventory item updated.', 'success');
+    };
+
+    window.deleteCurrentEditItem = async function() {
+      const id = document.getElementById('edit-modal-id').value;
+      const existing = state.items.find(i => i.id === id);
+      if (!existing) return;
+      await persistItemOperation('delete', existing, null);
+      closeEditModal();
+      showToast(`Removed "${existing.name}" from inventory.`, 'info');
+    };
+
+    // --- Stock History Audit Logbook ---
+    window.openHistoryModal = function() {
+      const container = document.getElementById('history-list-container');
+      if (state.history.length === 0) {
+        container.innerHTML = `
+          <div class="p-10 text-center text-xs text-slate-400">
+            No Stock IN or Stock OUT entries recorded yet.
+          </div>
+        `;
+      } else {
+        container.innerHTML = state.history.map(entry => {
+          const isIn = entry.type === 'IN';
+          const dateStr = new Date(entry.timestamp).toLocaleString([], {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+          const thumb = entry.image
+            ? `<img src="${entry.image}" class="w-10 h-10 rounded-xl object-cover shrink-0 bg-obsidian-800 border hairline-border" />`
+            : `<div class="w-10 h-10 rounded-xl bg-alabaster-100 dark:bg-obsidian-850 flex items-center justify-center text-slate-400 shrink-0 border hairline-border"><i data-lucide="package" class="w-4 h-4"></i></div>`;
+
+          return `
+            <div class="p-3 rounded-2xl bg-alabaster-50 dark:bg-obsidian-850 border hairline-border flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 min-w-0">
+                ${thumb}
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <p class="text-xs font-extrabold truncate">${entry.itemName}</p>
+                    ${entry.offlineSynced ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 text-[8px] font-bold uppercase">Local</span>` : ''}
+                  </div>
+                  <p class="text-[10px] text-slate-400 tabular-nums mt-0.5">${dateStr} · Bal: ${entry.resultingStock}</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-xl text-[11px] font-extrabold tabular-nums shrink-0 ${isIn ? 'bg-emerald-500/12 text-emerald-600 dark:text-emeraldNeon-400' : 'bg-rose-500/12 text-rose-500'}">
+                ${isIn ? '+' : '-'}${entry.quantity} ${entry.type}
+              </span>
+            </div>
+          `;
+        }).join('');
+      }
+      document.getElementById('history-modal').classList.remove('hidden');
+      lucide.createIcons();
+    };
+
+    window.closeHistoryModal = function() {
+      document.getElementById('history-modal').classList.add('hidden');
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

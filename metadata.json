@@ -1,0 +1,6 @@
+{
+  "name": "Aurelia Stock",
+  "description": "AI Vision inventory suite with micro-OCR variant disambiguation, ergonomic left/right-handed layout, offline queue sync, and private cloud ledger.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
